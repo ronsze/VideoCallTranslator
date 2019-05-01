@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+
+    <!-- Messages IDs for Translate -->
+    <item name="translateResult" type="id"/>
+    <item name="translateCode" type="id"/>
+    <item name="translateError" type="id"/>
+
+
+</resources>
