@@ -198,7 +198,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
 
   private SpeechService mSpeechService;
-  TextView inputText;
+  private TextView inputText;
 
   private VoiceRecorder mVoiceRecorder;
   private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
@@ -253,8 +253,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Thread.setDefaultUncaughtExceptionHandler(new UnhandledExceptionHandler(this));
-
-    inputText = findViewById(R.id.TEST22);
 
     // Set window styles for fullscreen-window size. Needs to be done before
     // adding content.
@@ -432,6 +430,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     } else {
       startCall();
     }
+
+    inputText = findViewById(R.id.TEST22);
   }
 
   @TargetApi(17)

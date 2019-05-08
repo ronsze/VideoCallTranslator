@@ -46,58 +46,6 @@ public class MainActivity extends AppCompatActivity {
     String lang;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    /** 음성인식
-
-    private SpeechService mSpeechService;
-
-    private VoiceRecorder mVoiceRecorder;
-    private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
-
-        @Override
-        public void onVoiceStart() {
-            Log.e("onVoice", "말을 시작");
-            if (mSpeechService != null) {
-                mSpeechService.setLang(lang);
-                mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
-            }
-        }
-
-        @Override
-        public void onVoice(byte[] data, int size) {
-            if (mSpeechService != null) {
-                mSpeechService.recognize(data, size);
-            }
-        }
-
-        @Override
-        public void onVoiceEnd() {
-            Log.e("onVoice", "말 끝");
-            if (mSpeechService != null) {
-                mSpeechService.finishRecognizing();
-            }
-        }
-
-    };
-
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.e("onService", "연결!");
-            mSpeechService = SpeechService.from(service);
-            mSpeechService.addListener(mSpeechServiceListener);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mSpeechService = null;
-        }
-    };
-
-    TextView inputText;
-    boolean btnToggle = false;
-    TextView view;
-
-    *///ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 영상통화
 
     private static final int CONNECTION_REQUEST = 1;
@@ -317,17 +265,6 @@ public class MainActivity extends AppCompatActivity {
         Window wnd = getWindow();
         wnd.addFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
         wnd.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-/*
-        // Prepare Cloud Speech API
-        bindService(new Intent(this, SpeechService.class), mServiceConnection, BIND_AUTO_CREATE);
-
-        // Start listening to voices
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                == PackageManager.PERMISSION_GRANTED) {
-            startVoiceRecorder();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO},0);
-        }*/
     }
 
     @Override
@@ -347,15 +284,6 @@ public class MainActivity extends AppCompatActivity {
         Window wnd = getWindow();
         wnd.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         wnd.clearFlags(WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
-/*
-        // Stop listening to voice
-        stopVoiceRecorder();
-
-        // Stop Cloud Speech API
-        mSpeechService.removeListener(mSpeechServiceListener);
-        unbindService(mServiceConnection);
-        mSpeechService = null;
-*/
         super.onStop();
     }
 
@@ -707,47 +635,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    /** 음성인식
-
-    private void startVoiceRecorder() {
-        if (mVoiceRecorder != null) {
-            mVoiceRecorder.stop();
-        }
-        mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
-        mVoiceRecorder.start();
-        Log.e("VoiceRecorder", "시작");
-    }
-
-    private void stopVoiceRecorder() {
-        if (mVoiceRecorder != null) {
-            mVoiceRecorder.stop();
-            mVoiceRecorder = null;
-        }
-        Log.e("VoiceRecorder", "중지");
-    }
-
-    private final SpeechService.Listener mSpeechServiceListener =
-            new SpeechService.Listener() {
-                @Override
-                public void onSpeechRecognized(final String text, final boolean isFinal) {
-                    Log.e("onSpeech", "인식");
-                    if (isFinal) {
-                        mVoiceRecorder.dismiss();
-                    }
-                    if (inputText != null && !TextUtils.isEmpty(text)) {
-                        runOnUiThread(() -> {
-                            if (isFinal) {
-                                //inputText.setText(null);
-                            } else {
-                                inputText.setText(text);
-                                translate.run(text);
-                            }
-                        });
-                    }
-                }
-            };
-
-    *///ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 번역 메시지 핸들러
 
     @SuppressLint("HandlerLeak")

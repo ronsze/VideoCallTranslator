@@ -25,6 +25,7 @@ import android.widget.TextView;
 import com.uswit.videocalltranslate.R;
 
 import org.webrtc.RendererCommon.ScalingType;
+import org.webrtc.voiceengine.WebRtcAudioRecord;
 
 /**
  * Fragment for call control.

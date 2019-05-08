@@ -19,8 +19,11 @@ package com.uswit.videocalltranslate;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import java.util.Arrays;
 
 
 /**
