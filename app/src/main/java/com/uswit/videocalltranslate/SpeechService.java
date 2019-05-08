@@ -253,6 +253,7 @@ public class SpeechService extends Service {
             Log.w(TAG, "API not ready. Ignoring the request.");
             return;
         }
+        Log.e(TAG, "startRecognizing");
         // Configure the API
         mRequestObserver = mApi.streamingRecognize(mResponseObserver);
         mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
@@ -283,6 +284,7 @@ public class SpeechService extends Service {
         if (mRequestObserver == null) {
             return;
         }
+        Log.e(TAG, "Recognizing");
         // Call the streaming recognition API
         mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
                 .setAudioContent(ByteString.copyFrom(data, 0, size))
@@ -296,6 +298,7 @@ public class SpeechService extends Service {
         if (mRequestObserver == null) {
             return;
         }
+        Log.e(TAG, "finishRecognizing");
         mRequestObserver.onCompleted();
         mRequestObserver = null;
     }

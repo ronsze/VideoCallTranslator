@@ -54,6 +54,12 @@
            android:layout_marginEnd="8dp"
            android:layout_width="48dp"
            android:layout_height="48dp"/>
+
+        <Button
+            android:id="@+id/TEST"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TEST" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
     <androidx.appcompat.widget.AppCompatTextView

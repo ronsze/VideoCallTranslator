@@ -13,9 +13,11 @@ package com.uswit.videocalltranslate.apprtc;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -111,6 +113,19 @@ public class CallFragment extends Fragment {
       captureFormatText.setVisibility(View.GONE);
       captureFormatSlider.setVisibility(View.GONE);
     }
+
+    Button bt = act.findViewById(R.id.TEST);
+    bt.setOnClickListener(v -> {
+      if(tf) {
+        Log.e("onClick", "스탑!");
+        ((CallActivity)getActivity()).stopVoiceRecorder();
+        tf = false;
+      } else {
+        Log.e("onClick", "시작!");
+        ((CallActivity)getActivity()).startVoiceRecorder();
+        tf = true;
+      }
+    });
   }
 
   // TODO(sakal): Replace with onAttach(Context) once we only support API level 23+.
@@ -119,5 +134,9 @@ public class CallFragment extends Fragment {
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     callEvents = (OnCallEvents) activity;
+    act = activity;
   }
+
+  Activity act;
+  boolean tf = false;
 }

@@ -43,9 +43,10 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     Translate translate;
+    String lang;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    // 음성인식
+    /** 음성인식
 
     private SpeechService mSpeechService;
 
@@ -95,9 +96,8 @@ public class MainActivity extends AppCompatActivity {
     TextView inputText;
     boolean btnToggle = false;
     TextView view;
-    String lang;
 
-    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    *///ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 영상통화
 
     private static final int CONNECTION_REQUEST = 1;
@@ -268,6 +268,11 @@ public class MainActivity extends AppCompatActivity {
             src = "en";
             target = "kr";
         }
+        if (src.equals("kr")) {
+            lang = "ko-KR";
+        } else {
+            lang = "en-US";
+        }
 
         translate = new Translate(handler, src, target);
 
@@ -360,14 +365,6 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == 0) {
-            if (permissions.length == 1 && grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                startVoiceRecorder();
-            }
-        }
-    }
 
 /*
     @Override
@@ -688,6 +685,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            intent.putExtra("lang", lang);
+
             startActivityForResult(intent, CONNECTION_REQUEST);
         }
     }
@@ -708,7 +707,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    // 음성인식
+    /** 음성인식
 
     private void startVoiceRecorder() {
         if (mVoiceRecorder != null) {
@@ -748,7 +747,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
-    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    *///ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 번역 메시지 핸들러
 
     @SuppressLint("HandlerLeak")

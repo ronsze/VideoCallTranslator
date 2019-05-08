@@ -14,9 +14,10 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
@@ -24,12 +25,15 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -41,8 +45,9 @@ import java.util.List;
 import java.util.Set;
 
 import com.uswit.videocalltranslate.R;
+import com.uswit.videocalltranslate.SpeechService;
+import com.uswit.videocalltranslate.VoiceRecorder;
 import com.uswit.videocalltranslate.apprtc.AppRTCAudioManager.AudioDevice;
-import com.uswit.videocalltranslate.apprtc.AppRTCAudioManager.AudioManagerEvents;
 import com.uswit.videocalltranslate.apprtc.AppRTCClient.RoomConnectionParameters;
 import com.uswit.videocalltranslate.apprtc.AppRTCClient.SignalingParameters;
 import com.uswit.videocalltranslate.apprtc.PeerConnectionClient.DataChannelParameters;
@@ -190,6 +195,57 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private HudFragment hudFragment;
   private CpuMonitor cpuMonitor;
 
+
+
+  private SpeechService mSpeechService;
+  TextView inputText;
+
+  private VoiceRecorder mVoiceRecorder;
+  private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
+
+    @Override
+    public void onVoiceStart() {
+      Log.e("onVoice", "말을 시작");
+      if (mSpeechService != null) {
+        mSpeechService.setLang(lang);
+        mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
+      }
+    }
+
+    @Override
+    public void onVoice(byte[] data, int size) {
+      if (mSpeechService != null) {
+        mSpeechService.recognize(data, size);
+      }
+    }
+
+    @Override
+    public void onVoiceEnd() {
+      Log.e("onVoice", "말 끝");
+      if (mSpeechService != null) {
+        mSpeechService.finishRecognizing();
+      }
+    }
+
+  };
+
+  private final ServiceConnection mServiceConnection = new ServiceConnection() {
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+      Log.e("onService", "연결!");
+      mSpeechService = SpeechService.from(service);
+      mSpeechService.addListener(mSpeechServiceListener);
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+      mSpeechService = null;
+      Log.e("onService", "끊음!");
+    }
+  };
+
+  String lang;
+
   @Override
   // TODO(bugs.webrtc.org/8580): LayoutParams.FLAG_TURN_SCREEN_ON and
   // LayoutParams.FLAG_SHOW_WHEN_LOCKED are deprecated.
@@ -197,6 +253,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Thread.setDefaultUncaughtExceptionHandler(new UnhandledExceptionHandler(this));
+
+    inputText = findViewById(R.id.TEST22);
 
     // Set window styles for fullscreen-window size. Needs to be done before
     // adding content.
@@ -226,6 +284,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     final Intent intent = getIntent();
     final EglBase eglBase = EglBase.create();
+
+    lang = intent.getStringExtra("lang");
 
     // Create video renderers.
     pipRenderer.init(eglBase.getEglBaseContext(), null);
@@ -477,6 +537,11 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (cpuMonitor != null) {
       cpuMonitor.pause();
     }
+
+    // Stop Cloud Speech API
+    mSpeechService.removeListener(mSpeechServiceListener);
+    unbindService(mServiceConnection);
+    mSpeechService = null;
   }
 
   @Override
@@ -490,6 +555,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (cpuMonitor != null) {
       cpuMonitor.resume();
     }
+
+    // Prepare Cloud Speech API
+    bindService(new Intent(this, SpeechService.class), mServiceConnection, BIND_AUTO_CREATE);
   }
 
   @Override
@@ -897,4 +965,43 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   public void onPeerConnectionError(final String description) {
     reportError(description);
   }
+
+
+
+  public void startVoiceRecorder() {
+    if (mVoiceRecorder != null) {
+      mVoiceRecorder.stop();
+    }
+    mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
+    mVoiceRecorder.start();
+    Log.e("VoiceRecorder", "시작");
+  }
+
+  public void stopVoiceRecorder() {
+    if (mVoiceRecorder != null) {
+      mVoiceRecorder.stop();
+      mVoiceRecorder = null;
+    }
+    Log.e("VoiceRecorder", "중지");
+  }
+
+  private final SpeechService.Listener mSpeechServiceListener =
+          new SpeechService.Listener() {
+            @Override
+            public void onSpeechRecognized(final String text, final boolean isFinal) {
+              Log.e("onSpeech", "인식");
+              if (isFinal) {
+                mVoiceRecorder.dismiss();
+              }
+              if (inputText != null && !TextUtils.isEmpty(text)) {
+                runOnUiThread(() -> {
+                  if (isFinal) {
+                    //inputText.setText(null);
+                  } else {
+                    inputText.setText(text);
+                  }
+                });
+              }
+            }
+          };
 }

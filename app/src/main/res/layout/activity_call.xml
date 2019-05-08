@@ -9,6 +9,7 @@
     android:layout_height="match_parent"
     tools:ignore="MergeRootFrame">
 
+
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/fullscreen_video_view"
         android:layout_width="wrap_content"
@@ -29,6 +30,14 @@
     <FrameLayout
         android:id="@+id/hud_fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent" >
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/TEST22"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="testtesttest" />
 
 </FrameLayout>
