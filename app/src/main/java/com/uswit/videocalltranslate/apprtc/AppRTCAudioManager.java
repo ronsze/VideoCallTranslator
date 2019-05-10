@@ -175,8 +175,7 @@ public class AppRTCAudioManager {
     amState = AudioManagerState.UNINITIALIZED;
 
     SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-    useSpeakerphone = sharedPreferences.getString(context.getString(R.string.pref_speakerphone_key),
-        context.getString(R.string.pref_speakerphone_default));
+    useSpeakerphone = "false";
     Log.d(TAG, "useSpeakerphone: " + useSpeakerphone);
     if (useSpeakerphone.equals(SPEAKERPHONE_FALSE)) {
       defaultAudioDevice = AudioDevice.EARPIECE;

@@ -26,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -33,6 +34,8 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -203,6 +206,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private static final ExecutorService executor = Executors.newSingleThreadExecutor();
   private SpeechService mSpeechService;
   private TextView inputText;
+  private TextView receiveText;
+  private Button sendBtn;
+  private EditText sendText;
 
   private VoiceRecorder mVoiceRecorder;
   private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
@@ -422,9 +428,13 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     mVoiceRecorder = new VoiceRecorder(mVoiceCallback, executor);
 
+    receiveText = (TextView)findViewById(R.id.receiveMsg);
+    sendText = (EditText)findViewById(R.id.sendMsg);
+    sendBtn = (Button)findViewById(R.id.sendBtn);
+
     // Create peer connection client.
     peerConnectionClient = new PeerConnectionClient(
-        getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this, mVoiceRecorder);
+        getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this, mVoiceRecorder, new MsgHandler());
     PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
     if (loopback) {
       options.networkIgnoreMask = 0;
@@ -436,6 +446,16 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     } else {
       startCall();
     }
+
+    sendBtn.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if(sendText != null && sendText.length() > 0){
+          peerConnectionClient.sendMsg(sendText.getText().toString());
+          sendText.setText("");
+        }
+      }
+    });
 
     inputText = findViewById(R.id.TEST22);
   }
@@ -999,9 +1019,17 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
               }
               if (inputText != null && !TextUtils.isEmpty(text)) {
                 runOnUiThread(() -> {
+                  peerConnectionClient.sendMsg(text);
                   inputText.setText(text);
                 });
               }
             }
           };
+
+  class MsgHandler extends Handler{
+    public void handleMessage(Message msg){
+      super.handleMessage(msg);
+      receiveText.setText(msg.obj + "");
+    }
+  }
 }

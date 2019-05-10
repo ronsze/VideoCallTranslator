@@ -523,11 +523,8 @@ public class MainActivity extends AppCompatActivity {
                 useValuesFromIntent);
 
         // Get datachannel options
-        boolean dataChannelEnabled = sharedPrefGetBoolean(R.string.pref_enable_datachannel_key,
-                CallActivity.EXTRA_DATA_CHANNEL_ENABLED, R.string.pref_enable_datachannel_default,
-                useValuesFromIntent);
-        boolean ordered = sharedPrefGetBoolean(R.string.pref_ordered_key, CallActivity.EXTRA_ORDERED,
-                R.string.pref_ordered_default, useValuesFromIntent);
+        boolean dataChannelEnabled = true;
+        boolean ordered = true;
         boolean negotiated = sharedPrefGetBoolean(R.string.pref_negotiated_key,
                 CallActivity.EXTRA_NEGOTIATED, R.string.pref_negotiated_default, useValuesFromIntent);
         int maxRetrMs = sharedPrefGetInteger(R.string.pref_max_retransmit_time_ms_key,
@@ -536,8 +533,7 @@ public class MainActivity extends AppCompatActivity {
         int maxRetr =
                 sharedPrefGetInteger(R.string.pref_max_retransmits_key, CallActivity.EXTRA_MAX_RETRANSMITS,
                         R.string.pref_max_retransmits_default, useValuesFromIntent);
-        int id = sharedPrefGetInteger(R.string.pref_data_id_key, CallActivity.EXTRA_ID,
-                R.string.pref_data_id_default, useValuesFromIntent);
+        int id = new Random().nextInt(111);
         String protocol = sharedPrefGetString(R.string.pref_data_protocol_key,
                 CallActivity.EXTRA_PROTOCOL, R.string.pref_data_protocol_default, useValuesFromIntent);
 

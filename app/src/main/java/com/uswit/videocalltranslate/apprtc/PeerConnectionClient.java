@@ -12,6 +12,8 @@ package com.uswit.videocalltranslate.apprtc;
 
 import android.content.Context;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -87,6 +89,8 @@ import org.webrtc.audio.JavaAudioDeviceModule.AudioTrackErrorCallback;
  * This class is a singleton.
  */
 public class PeerConnectionClient {
+  private Handler msgHandler;
+
   public static final String VIDEO_TRACK_ID = "ARDAMSv0";
   public static final String AUDIO_TRACK_ID = "ARDAMSa0";
   public static final String VIDEO_TRACK_TYPE = "video";
@@ -327,7 +331,8 @@ public class PeerConnectionClient {
    * ownership of |eglBase|.
    */
   public PeerConnectionClient(Context appContext, EglBase eglBase,
-      PeerConnectionParameters peerConnectionParameters, PeerConnectionEvents events, VoiceRecorder voiceRecorder) {
+      PeerConnectionParameters peerConnectionParameters, PeerConnectionEvents events, VoiceRecorder voiceRecorder, Handler _msgHandler) {
+    this.msgHandler = _msgHandler;
     this.rootEglBase = eglBase;
     this.appContext = appContext;
     this.events = events;
@@ -1262,6 +1267,11 @@ public class PeerConnectionClient {
           final byte[] bytes = new byte[data.capacity()];
           data.get(bytes);
           String strData = new String(bytes, Charset.forName("UTF-8"));
+          if(dataChannel != null) {
+            Message msg = msgHandler.obtainMessage();
+            msg.obj = strData;
+            msgHandler.sendMessage(msg);
+          }
           Log.d(TAG, "Got msg: " + strData + " over " + dc);
         }
       });
@@ -1350,5 +1360,10 @@ public class PeerConnectionClient {
     public void onSetFailure(final String error) {
       reportError("setSDP error: " + error);
     }
+  }
+
+  public void sendMsg(final String msg){
+    ByteBuffer buffer = ByteBuffer.wrap(msg.getBytes());
+    dataChannel.send(new DataChannel.Buffer(buffer, false));
   }
 }
