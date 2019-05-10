@@ -244,12 +244,12 @@ public class SpeechService extends Service {
         mListeners.remove(listener);
     }
 
-    /**
+    /*
      * Starts recognizing speech audio.
      *
      * @param sampleRate The sample rate of the audio.
      */
-    public void startRecognizing(int sampleRate) {
+    public void startRecognizing() {
         if (mApi == null) {
             Log.w(TAG, "API not ready. Ignoring the request.");
             return;
@@ -262,7 +262,7 @@ public class SpeechService extends Service {
                         .setConfig(RecognitionConfig.newBuilder()
                                 .setLanguageCode(lang)
                                 .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                                .setSampleRateHertz(sampleRate)
+                                .setSampleRateHertz(16000)
                                 .build())
                         .setInterimResults(true)
                         .setSingleUtterance(true)
@@ -285,7 +285,7 @@ public class SpeechService extends Service {
         if (mRequestObserver == null) {
             return;
         }
-        Log.e(TAG, "Recognizing");
+        Log.e(TAG, Arrays.toString(data));
         // Call the streaming recognition API
         mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
                 .setAudioContent(ByteString.copyFrom(data, 0, size))
@@ -315,7 +315,7 @@ public class SpeechService extends Service {
                     RecognizeRequest.newBuilder()
                             .setConfig(RecognitionConfig.newBuilder()
                                     .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
-                                    .setLanguageCode("en-US")
+                                    .setLanguageCode(lang)
                                     .setSampleRateHertz(16000)
                                     .build())
                             .setAudio(RecognitionAudio.newBuilder()

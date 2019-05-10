@@ -39,10 +39,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.RuntimeException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import com.uswit.videocalltranslate.R;
 import com.uswit.videocalltranslate.SpeechService;
@@ -197,6 +200,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
 
 
+  private static final ExecutorService executor = Executors.newSingleThreadExecutor();
   private SpeechService mSpeechService;
   private TextView inputText;
 
@@ -208,14 +212,14 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       Log.e("onVoice", "말을 시작");
       if (mSpeechService != null) {
         mSpeechService.setLang(lang);
-        mSpeechService.startRecognizing(mVoiceRecorder.getSampleRate());
+        //mSpeechService.startRecognizing();
       }
     }
 
     @Override
-    public void onVoice(byte[] data, int size) {
+    public void onVoice(InputStream inputStream) {
       if (mSpeechService != null) {
-        mSpeechService.recognize(data, size);
+        mSpeechService.recognizeInputStream(inputStream);
       }
     }
 
@@ -223,7 +227,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     public void onVoiceEnd() {
       Log.e("onVoice", "말 끝");
       if (mSpeechService != null) {
-        mSpeechService.finishRecognizing();
+        //mSpeechService.finishRecognizing();
       }
     }
 
@@ -416,9 +420,11 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       (new Handler()).postDelayed(this::disconnect, runTimeMs);
     }
 
+    mVoiceRecorder = new VoiceRecorder(mVoiceCallback, executor);
+
     // Create peer connection client.
     peerConnectionClient = new PeerConnectionClient(
-        getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this);
+        getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this, mVoiceRecorder);
     PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
     if (loopback) {
       options.networkIgnoreMask = 0;
@@ -972,7 +978,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (mVoiceRecorder != null) {
       mVoiceRecorder.stop();
     }
-    mVoiceRecorder = new VoiceRecorder(mVoiceCallback);
     mVoiceRecorder.start();
     Log.e("VoiceRecorder", "시작");
   }
@@ -980,7 +985,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   public void stopVoiceRecorder() {
     if (mVoiceRecorder != null) {
       mVoiceRecorder.stop();
-      mVoiceRecorder = null;
     }
     Log.e("VoiceRecorder", "중지");
   }
@@ -995,11 +999,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
               }
               if (inputText != null && !TextUtils.isEmpty(text)) {
                 runOnUiThread(() -> {
-                  if (isFinal) {
-                    //inputText.setText(null);
-                  } else {
-                    inputText.setText(text);
-                  }
+                  inputText.setText(text);
                 });
               }
             }

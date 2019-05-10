@@ -37,6 +37,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.uswit.videocalltranslate.VoiceRecorder;
 import com.uswit.videocalltranslate.apprtc.RecordedAudioToFileController;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
@@ -177,6 +179,8 @@ public class PeerConnectionClient {
   // Implements the WebRtcAudioRecordSamplesReadyCallback interface and writes
   // recorded audio samples to an output file.
   @Nullable private RecordedAudioToFileController saveRecordedAudioToFile;
+
+  private VoiceRecorder voiceRecorder;
 
   /**
    * Peer connection parameters.
@@ -323,12 +327,13 @@ public class PeerConnectionClient {
    * ownership of |eglBase|.
    */
   public PeerConnectionClient(Context appContext, EglBase eglBase,
-      PeerConnectionParameters peerConnectionParameters, PeerConnectionEvents events) {
+      PeerConnectionParameters peerConnectionParameters, PeerConnectionEvents events, VoiceRecorder voiceRecorder) {
     this.rootEglBase = eglBase;
     this.appContext = appContext;
     this.events = events;
     this.peerConnectionParameters = peerConnectionParameters;
     this.dataChannelEnabled = peerConnectionParameters.dataChannelParameters != null;
+    this.voiceRecorder = voiceRecorder;
 
     Log.d(TAG, "Preferred video codec: " + getSdpVideoCodecName(peerConnectionParameters));
 
@@ -508,11 +513,13 @@ public class PeerConnectionClient {
     };
 
     return JavaAudioDeviceModule.builder(appContext)
-        .setSamplesReadyCallback(saveRecordedAudioToFile)
+        .setSamplesReadyCallback(voiceRecorder)
+        //.setSamplesReadyCallback(saveRecordedAudioToFile)
         .setUseHardwareAcousticEchoCanceler(!peerConnectionParameters.disableBuiltInAEC)
         .setUseHardwareNoiseSuppressor(!peerConnectionParameters.disableBuiltInNS)
         .setAudioRecordErrorCallback(audioRecordErrorCallback)
         .setAudioTrackErrorCallback(audioTrackErrorCallback)
+        .setSampleRate(16000)
         .createAudioDeviceModule();
   }
 

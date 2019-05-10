@@ -17,13 +17,18 @@
 package com.uswit.videocalltranslate;
 
 import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import java.util.Arrays;
+import org.webrtc.audio.JavaAudioDeviceModule;
+import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
 
 
 /**
@@ -32,14 +37,8 @@ import java.util.Arrays;
  *
  * <p>The recorded audio format is always {@link AudioFormat#ENCODING_PCM_16BIT} and
  * {@link AudioFormat#CHANNEL_IN_MONO}. This class will automatically pick the right sample rate
- * for the device. Use {@link #getSampleRate()} to get the selected value.</p>
  */
-public class VoiceRecorder {
-
-    private static final int[] SAMPLE_RATE_CANDIDATES = new int[]{16000, 11025, 22050, 44100};
-
-    private static final int CHANNEL = AudioFormat.CHANNEL_IN_MONO;
-    private static final int ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+public class VoiceRecorder implements SamplesReadyCallback {
 
     private static final int AMPLITUDE_THRESHOLD = 1500;
     private static final int SPEECH_TIMEOUT_MILLIS = 2000;
@@ -53,13 +52,13 @@ public class VoiceRecorder {
         public void onVoiceStart() {
         }
 
-        /**
+        /*
          * Called when the recorder is hearing voice.
          *
          * @param data The audio data in {@link AudioFormat#ENCODING_PCM_16BIT}.
          * @param size The size of the actual data in {@code data}.
          */
-        public void onVoice(byte[] data, int size) {
+        public void onVoice(InputStream inputStream) {
         }
 
         /**
@@ -71,13 +70,15 @@ public class VoiceRecorder {
 
     private final Callback mCallback;
 
-    private AudioRecord mAudioRecord;
-
-    private Thread mThread;
-
     private byte[] mBuffer;
 
+    private ByteArrayOutputStream mByteBuffer;
+
+    private int size;
+
     private final Object mLock = new Object();
+
+    private boolean isRunning;
 
     /** The timestamp of the last time that voice is heard. */
     private long mLastVoiceHeardMillis = Long.MAX_VALUE;
@@ -85,8 +86,13 @@ public class VoiceRecorder {
     /** The timestamp when the current voice is started. */
     private long mVoiceStartedMillis;
 
-    public VoiceRecorder(@NonNull Callback callback) {
+    private final ExecutorService executor;
+
+    public VoiceRecorder(@NonNull Callback callback, ExecutorService executor) {
         mCallback = callback;
+        this.executor = executor;
+
+        mByteBuffer = new ByteArrayOutputStream();
     }
 
     /**
@@ -97,16 +103,10 @@ public class VoiceRecorder {
     public void start() {
         // Stop recording if it is currently ongoing.
         stop();
-        // Try to create a new recording session.
-        mAudioRecord = createAudioRecord();
-        if (mAudioRecord == null) {
-            throw new RuntimeException("Cannot instantiate VoiceRecorder");
+
+        synchronized (mLock) {
+            isRunning = true;
         }
-        // Start recording.
-        mAudioRecord.startRecording();
-        // Start processing the captured audio.
-        mThread = new Thread(new ProcessVoice());
-        mThread.start();
     }
 
     /**
@@ -114,17 +114,16 @@ public class VoiceRecorder {
      */
     public void stop() {
         synchronized (mLock) {
+            isRunning = false;
+
             dismiss();
-            if (mThread != null) {
-                mThread.interrupt();
-                mThread = null;
-            }
-            if (mAudioRecord != null) {
-                mAudioRecord.stop();
-                mAudioRecord.release();
-                mAudioRecord = null;
-            }
+
             mBuffer = null;
+            try {
+                mByteBuffer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -143,91 +142,72 @@ public class VoiceRecorder {
      *
      * @return The sample rate of recorded audio.
      */
-    public int getSampleRate() {
-        if (mAudioRecord != null) {
-            return mAudioRecord.getSampleRate();
+
+    @Override
+    public void onWebRtcAudioRecordSamplesReady(JavaAudioDeviceModule.AudioSamples samples) {
+        if (!isRunning) return;
+
+        // The native audio layer on Android should use 16-bit PCM format.
+        if (samples.getAudioFormat() != AudioFormat.ENCODING_PCM_16BIT) {
+            Log.e("SamplesReady", "Invalid audio format");
+            return;
         }
-        return 0;
-    }
+        // Append the recorded 16-bit audio samples to the open output file.
+        executor.execute(() -> {
+            mBuffer = null;
+            mBuffer = samples.getData();
+            size = samples.getData().length;
 
-    /**
-     * Creates a new {@link AudioRecord}.
-     *
-     * @return A newly created {@link AudioRecord}, or null if it cannot be created (missing
-     * permissions?).
-     */
-    private AudioRecord createAudioRecord() {
-        for (int sampleRate : SAMPLE_RATE_CANDIDATES) {
-            final int sizeInBytes = AudioRecord.getMinBufferSize(sampleRate, CHANNEL, ENCODING);
-            if (sizeInBytes == AudioRecord.ERROR_BAD_VALUE) {
-                continue;
-            }
-            final AudioRecord audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                    sampleRate, CHANNEL, ENCODING, sizeInBytes);
-            if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-                mBuffer = new byte[sizeInBytes];
-                return audioRecord;
-            } else {
-                audioRecord.release();
-            }
-        }
-        return null;
-    }
+            synchronized (mLock) {
+                if (Thread.currentThread().isInterrupted()) {
+                    return;
+                }
 
-    /**
-     * Continuously processes the captured audio and notifies {@link #mCallback} of corresponding
-     * events.
-     */
-    private class ProcessVoice implements Runnable {
-
-        @Override
-        public void run() {
-            while (true) {
-                synchronized (mLock) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
-                    }
-                    final int size = mAudioRecord.read(mBuffer, 0, mBuffer.length);
+                try {
                     final long now = System.currentTimeMillis();
                     if (isHearingVoice(mBuffer, size)) {
                         if (mLastVoiceHeardMillis == Long.MAX_VALUE) {
                             mVoiceStartedMillis = now;
                             mCallback.onVoiceStart();
                         }
-                        mCallback.onVoice(mBuffer, size);
+                        mByteBuffer.write(mBuffer);
                         mLastVoiceHeardMillis = now;
                         if (now - mVoiceStartedMillis > MAX_SPEECH_LENGTH_MILLIS) {
                             end();
                         }
                     } else if (mLastVoiceHeardMillis != Long.MAX_VALUE) {
-                        mCallback.onVoice(mBuffer, size);
+                        mByteBuffer.write(mBuffer);
                         if (now - mLastVoiceHeardMillis > SPEECH_TIMEOUT_MILLIS) {
                             end();
                         }
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        }
-
-        private void end() {
-            mLastVoiceHeardMillis = Long.MAX_VALUE;
-            mCallback.onVoiceEnd();
-        }
-
-        private boolean isHearingVoice(byte[] buffer, int size) {
-            for (int i = 0; i < size - 1; i += 2) {
-                // The buffer has LINEAR16 in little endian.
-                int s = buffer[i + 1];
-                if (s < 0) s *= -1;
-                s <<= 8;
-                s += Math.abs(buffer[i]);
-                if (s > AMPLITUDE_THRESHOLD) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
+        });
     }
 
+    private void end() {
+        mLastVoiceHeardMillis = Long.MAX_VALUE;
+        byte[] buffer = mByteBuffer.toByteArray();
+        mCallback.onVoice(new ByteArrayInputStream(buffer));
+        mCallback.onVoiceEnd();
+
+        mByteBuffer.reset();
+    }
+
+    private boolean isHearingVoice(byte[] buffer, int size) {
+        for (int i = 0; i < size - 1; i += 2) {
+            // The buffer has LINEAR16 in little endian.
+            int s = buffer[i + 1];
+            if (s < 0) s *= -1;
+            s <<= 8;
+            s += Math.abs(buffer[i]);
+            if (s > AMPLITUDE_THRESHOLD) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
