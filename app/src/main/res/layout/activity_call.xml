@@ -18,10 +18,10 @@
 
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/pip_video_view"
-        android:layout_height="144dp"
         android:layout_width="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"/>
+        android:layout_height="144dp"
+        android:layout_gravity="start|top"
+        android:layout_margin="16dp" />
 
     <FrameLayout
         android:id="@+id/call_fragment_container"
@@ -41,17 +41,9 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/TEST22"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SendMessage"
-            android:textSize="24sp" />
-
-        <TextView
             android:id="@+id/receiveMsg"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="ReceiveMessage"
             android:textSize="24sp" />
 
         <EditText
@@ -61,11 +53,34 @@
             android:ems="10"
             android:inputType="textPersonName" />
 
-        <Button
-            android:id="@+id/sendBtn"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/sendBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:text="send" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/button_toggle_translate"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@android:drawable/stat_notify_sync" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/sendMsgPrev"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="send" />
+            android:textSize="24sp" />
+
     </LinearLayout>
 
 </FrameLayout>

@@ -17,7 +17,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -25,9 +24,6 @@ import android.widget.TextView;
 import com.uswit.videocalltranslate.R;
 
 import org.webrtc.RendererCommon.ScalingType;
-import org.webrtc.audio.JavaAudioDeviceModule;
-
-import java.util.Arrays;
 
 /**
  * Fragment for call control.
@@ -90,6 +86,21 @@ public class CallFragment extends Fragment {
       toggleMuteButton.setAlpha(enabled ? 1.0f : 0.3f);
     });
 
+    ImageButton bt = controlView.findViewById(R.id.button_speech);
+    bt.setOnClickListener(v -> {
+      if(tf) {
+        Log.e("onClick", "스탑!");
+        ((CallActivity)getActivity()).stopVoiceRecorder();
+        v.setBackgroundResource(R.drawable.ic_record_voice_none);
+        tf = false;
+      } else {
+        Log.e("onClick", "시작!");
+        ((CallActivity)getActivity()).startVoiceRecorder();
+        v.setBackgroundResource(R.drawable.ic_record_voice);
+        tf = true;
+      }
+    });
+
     return controlView;
   }
 
@@ -116,19 +127,6 @@ public class CallFragment extends Fragment {
       captureFormatText.setVisibility(View.GONE);
       captureFormatSlider.setVisibility(View.GONE);
     }
-
-    Button bt = act.findViewById(R.id.TEST);
-    bt.setOnClickListener(v -> {
-      if(tf) {
-        Log.e("onClick", "스탑!");
-        ((CallActivity)getActivity()).stopVoiceRecorder();
-        tf = false;
-      } else {
-        Log.e("onClick", "시작!");
-        ((CallActivity)getActivity()).startVoiceRecorder();
-        tf = true;
-      }
-    });
   }
 
   // TODO(sakal): Replace with onAttach(Context) once we only support API level 23+.
@@ -137,9 +135,7 @@ public class CallFragment extends Fragment {
   public void onAttach(Activity activity) {
     super.onAttach(activity);
     callEvents = (OnCallEvents) activity;
-    act = activity;
   }
 
-  Activity act;
   boolean tf = false;
 }

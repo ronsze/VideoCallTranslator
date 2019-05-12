@@ -10,6 +10,7 @@
 
 package com.uswit.videocalltranslate.apprtc;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -22,7 +23,6 @@ import android.content.pm.PackageManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -36,6 +36,7 @@ import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +53,7 @@ import java.util.concurrent.Executors;
 
 import com.uswit.videocalltranslate.R;
 import com.uswit.videocalltranslate.SpeechService;
+import com.uswit.videocalltranslate.Translate;
 import com.uswit.videocalltranslate.VoiceRecorder;
 import com.uswit.videocalltranslate.apprtc.AppRTCAudioManager.AudioDevice;
 import com.uswit.videocalltranslate.apprtc.AppRTCClient.RoomConnectionParameters;
@@ -201,14 +203,19 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private HudFragment hudFragment;
   private CpuMonitor cpuMonitor;
 
-
+  Translate translate;
 
   private static final ExecutorService executor = Executors.newSingleThreadExecutor();
   private SpeechService mSpeechService;
-  private TextView inputText;
   private TextView receiveText;
-  private Button sendBtn;
   private EditText sendText;
+  private TextView sendTextPrev;
+
+  private String originText;
+  private String transText;
+  private boolean toggleTrans = true;
+
+  private String lang;
 
   private VoiceRecorder mVoiceRecorder;
   private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
@@ -216,10 +223,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     @Override
     public void onVoiceStart() {
       Log.e("onVoice", "말을 시작");
-      if (mSpeechService != null) {
-        mSpeechService.setLang(lang);
-        //mSpeechService.startRecognizing();
-      }
+
+      mSpeechService.setLang(lang);
     }
 
     @Override
@@ -232,9 +237,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     @Override
     public void onVoiceEnd() {
       Log.e("onVoice", "말 끝");
-      if (mSpeechService != null) {
-        //mSpeechService.finishRecognizing();
-      }
     }
 
   };
@@ -254,12 +256,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     }
   };
 
-  String lang;
-
   @Override
   // TODO(bugs.webrtc.org/8580): LayoutParams.FLAG_TURN_SCREEN_ON and
   // LayoutParams.FLAG_SHOW_WHEN_LOCKED are deprecated.
-  @SuppressWarnings("deprecation")
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Thread.setDefaultUncaughtExceptionHandler(new UnhandledExceptionHandler(this));
@@ -285,15 +284,15 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     View.OnClickListener listener = view -> toggleCallControlFragmentVisibility();
 
     // Swap feeds on pip view click.
+    assert pipRenderer != null;
     pipRenderer.setOnClickListener(view -> setSwappedFeeds(!isSwappedFeeds));
 
+    assert fullscreenRenderer != null;
     fullscreenRenderer.setOnClickListener(listener);
     remoteSinks.add(remoteProxyRenderer);
 
     final Intent intent = getIntent();
     final EglBase eglBase = EglBase.create();
-
-    lang = intent.getStringExtra("lang");
 
     // Create video renderers.
     pipRenderer.init(eglBase.getEglBaseContext(), null);
@@ -358,7 +357,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     int videoWidth = intent.getIntExtra(EXTRA_VIDEO_WIDTH, 0);
     int videoHeight = intent.getIntExtra(EXTRA_VIDEO_HEIGHT, 0);
 
-    screencaptureEnabled = intent.getBooleanExtra(EXTRA_SCREENCAPTURE, false);
+    screencaptureEnabled = intent.getBooleanExtra(EXTRA_SCREENCAPTURE, true);
     // If capturing format is not specified for screencapture, use screen resolution.
     if (screencaptureEnabled && videoWidth == 0 && videoHeight == 0) {
       DisplayMetrics displayMetrics = getDisplayMetrics();
@@ -428,9 +427,12 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     mVoiceRecorder = new VoiceRecorder(mVoiceCallback, executor);
 
-    receiveText = (TextView)findViewById(R.id.receiveMsg);
-    sendText = (EditText)findViewById(R.id.sendMsg);
-    sendBtn = (Button)findViewById(R.id.sendBtn);
+    lang = intent.getStringExtra("lang");
+
+    receiveText = findViewById(R.id.receiveMsg);
+    sendText = findViewById(R.id.sendMsg);
+    sendTextPrev = findViewById(R.id.sendMsgPrev);
+    Button sendBtn = findViewById(R.id.sendBtn);
 
     // Create peer connection client.
     peerConnectionClient = new PeerConnectionClient(
@@ -447,17 +449,39 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       startCall();
     }
 
-    sendBtn.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if(sendText != null && sendText.length() > 0){
-          peerConnectionClient.sendMsg(sendText.getText().toString());
-          sendText.setText("");
-        }
+    sendBtn.setOnClickListener(v -> {
+      if(sendText != null && sendText.length() > 0){
+        peerConnectionClient.sendMsg(sendText.getText().toString());
+        sendTextPrev.setText(sendText.getText());
+        sendText.setText("");
       }
     });
 
-    inputText = findViewById(R.id.TEST22);
+    ImageButton toggleButton = findViewById(R.id.button_toggle_translate);
+    toggleButton.setOnClickListener(view -> {
+      toggleTrans = !toggleTrans;
+      toggleButton.setAlpha(toggleTrans ? 1.0f : 0.3f);
+
+      if(toggleTrans)
+        receiveText.setText(transText);
+      else
+        receiveText.setText(originText);
+    });
+
+    String src = "kr";
+    String target = "en";
+
+    if (lang.equals("ko")) {
+      src = "en";
+      target = "kr";
+    }
+    if (lang.equals("ko")) {
+      lang = "ko-KR";
+    } else {
+      lang = "en-US";
+    }
+
+    translate = new Translate(handler, src, target);
   }
 
   @TargetApi(17)
@@ -472,9 +496,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   @TargetApi(19)
   private static int getSystemUiVisibility() {
     int flags = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN;
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      flags |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
-    }
+    flags |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
     return flags;
   }
 
@@ -612,6 +634,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
   @Override
   public void onVideoScalingSwitch(ScalingType scalingType) {
+    assert fullscreenRenderer != null;
     fullscreenRenderer.setScalingType(scalingType);
   }
 
@@ -805,7 +828,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     this.isSwappedFeeds = isSwappedFeeds;
     localProxyVideoSink.setTarget(isSwappedFeeds ? fullscreenRenderer : pipRenderer);
     remoteProxyRenderer.setTarget(isSwappedFeeds ? pipRenderer : fullscreenRenderer);
+    assert fullscreenRenderer != null;
     fullscreenRenderer.setMirror(isSwappedFeeds);
+    assert pipRenderer != null;
     pipRenderer.setMirror(!isSwappedFeeds);
   }
 
@@ -818,11 +843,14 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     signalingParameters = params;
     logAndToast("Creating peer connection, delay=" + delta + "ms");
     VideoCapturer videoCapturer = null;
+    assert peerConnectionParameters != null;
     if (peerConnectionParameters.videoCallEnabled) {
       videoCapturer = createVideoCapturer();
     }
+    assert peerConnectionClient != null;
     peerConnectionClient.createPeerConnection(localProxyVideoSink, remoteSinks, videoCapturer, signalingParameters);
 
+    assert signalingParameters != null;
     if (signalingParameters.initiator) {
       logAndToast("Creating OFFER...");
       // Create offer. Offer SDP will be sent to answering client in
@@ -860,6 +888,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       }
       logAndToast("Received remote " + sdp.type + ", delay=" + delta + "ms");
       peerConnectionClient.setRemoteDescription(sdp);
+      assert signalingParameters != null;
       if (!signalingParameters.initiator) {
         logAndToast("Creating ANSWER...");
         // Create answer. Answer SDP will be sent to offering client in
@@ -914,14 +943,17 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     runOnUiThread(() -> {
       if (appRtcClient != null) {
         logAndToast("Sending " + sdp.type + ", delay=" + delta + "ms");
+        assert signalingParameters != null;
         if (signalingParameters.initiator) {
           appRtcClient.sendOfferSdp(sdp);
         } else {
           appRtcClient.sendAnswerSdp(sdp);
         }
       }
+      assert peerConnectionParameters != null;
       if (peerConnectionParameters.videoMaxBitrate > 0) {
         Log.d(TAG, "Set video maximum bitrate: " + peerConnectionParameters.videoMaxBitrate);
+        assert peerConnectionClient != null;
         peerConnectionClient.setVideoMaxBitrate(peerConnectionParameters.videoMaxBitrate);
       }
     });
@@ -998,6 +1030,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     if (mVoiceRecorder != null) {
       mVoiceRecorder.stop();
     }
+    assert mVoiceRecorder != null;
     mVoiceRecorder.start();
     Log.e("VoiceRecorder", "시작");
   }
@@ -1017,19 +1050,55 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
               if (isFinal) {
                 mVoiceRecorder.dismiss();
               }
-              if (inputText != null && !TextUtils.isEmpty(text)) {
+              if (sendText != null && !TextUtils.isEmpty(text)) {
                 runOnUiThread(() -> {
-                  peerConnectionClient.sendMsg(text);
-                  inputText.setText(text);
+                  //peerConnectionClient.sendMsg(text);
+                  sendText.setText(text);
                 });
               }
             }
           };
 
+  @SuppressLint("HandlerLeak")
   class MsgHandler extends Handler{
     public void handleMessage(Message msg){
       super.handleMessage(msg);
-      receiveText.setText(msg.obj + "");
+      originText = msg.obj.toString();
+      translate.run(originText);
     }
   }
+
+  //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+  // 번역 메시지 핸들러
+
+  @SuppressLint("HandlerLeak")
+  Handler handler = new Handler() {
+    public void handleMessage(Message msg) {
+      super.handleMessage(msg);
+
+      switch (msg.what) {
+        case R.id.translateCode:
+          Toast.makeText(CallActivity.this, "responseCode >> " + msg.arg1, Toast.LENGTH_SHORT).show();
+
+          break;
+
+        case R.id.translateResult:
+          transText = msg.obj.toString();
+
+          if(toggleTrans)
+            receiveText.setText(transText);
+          else
+            receiveText.setText(originText);
+
+          break;
+
+        case R.id.translateError:
+          Toast.makeText(CallActivity.this, msg.obj.toString(), Toast.LENGTH_SHORT).show();
+
+          break;
+
+        default:
+      }
+    }
+  };
 }

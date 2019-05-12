@@ -6,7 +6,7 @@
     <string name="btn_complete">Complete</string>
     <string name="hint_only_english">Only English, Number</string>
     <string name="talkabout">Speak now</string>
-    <string name="recogn_connecting">Connecting...</string>
+    <string name="recogn_connecting">Connecting…</string>
     <string name="id_invalid">Your PeerID is null or invalid.</string>
     <string name="list_empty">PeerID list (other than your ID) is empty.</string>
     <string name="btn_call">Make Call</string>

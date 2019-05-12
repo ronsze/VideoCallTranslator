@@ -311,6 +311,7 @@ public class SpeechService extends Service {
      */
     public void recognizeInputStream(InputStream stream) {
         try {
+            Log.e("Test", lang);
             mApi.recognize(
                     RecognizeRequest.newBuilder()
                             .setConfig(RecognitionConfig.newBuilder()

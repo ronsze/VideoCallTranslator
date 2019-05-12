@@ -1362,8 +1362,9 @@ public class PeerConnectionClient {
     }
   }
 
-  public void sendMsg(final String msg){
+  void sendMsg(final String msg) {
     ByteBuffer buffer = ByteBuffer.wrap(msg.getBytes());
+    assert dataChannel != null;
     dataChannel.send(new DataChannel.Buffer(buffer, false));
   }
 }

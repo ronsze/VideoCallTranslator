@@ -11,7 +11,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
-class Translate {
+public class Translate {
     private final String apikey = "09d9f87fedec235485dc389a14ed4f34";
 
     private String src;
@@ -19,7 +19,7 @@ class Translate {
 
     private Handler handler;
 
-    Translate(Handler handler, String src, String target) {
+    public Translate(Handler handler, String src, String target) {
         this.handler = handler;
 
         this.src = src;
@@ -31,7 +31,7 @@ class Translate {
         this.target = target;
     }
 
-    void run(final String str) {
+    public void run(final String str) {
         new Thread() {
             public void run() {
                 HttpURLConnection conn = null;

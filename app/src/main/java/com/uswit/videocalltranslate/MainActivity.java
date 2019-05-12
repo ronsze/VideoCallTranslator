@@ -1,34 +1,21 @@
 package com.uswit.videocalltranslate;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 import android.preference.PreferenceManager;
-import android.text.TextUtils;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.inputmethod.EditorInfo;
 import android.webkit.URLUtil;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.core.app.ActivityCompat;
@@ -42,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
 
-    Translate translate;
     String lang;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -113,148 +99,14 @@ public class MainActivity extends AppCompatActivity {
             connectToRoom(room, true, loopback, useValuesFromIntent, runTimeMs);
         }
 
-/*
-        final String myName = prefs.getString("name", "guest");
+        lang = prefs.getString("lang", "ko");
+        TextView t = findViewById(R.id.textView2);
 
-        TextView textView = findViewById(R.id.my_name);
-        textView.setText(String.format("My ID : %s", myName));
-
-        PeerOption option = new PeerOption();
-        option.key = API_KEY;
-        option.domain = DOMAIN;
-        Peer peer = new Peer(this, myName, option);
-
-        vc = new VideoCall(this, new Handler(Looper.getMainLooper()), peer, myName);
-
-        vc.setCanvas(findViewById(R.id.LocalView), findViewById(R.id.RemoteView), findViewById(R.id.MainLayout),
-                findViewById(R.id.CallLayout), findViewById(R.id.callBtn), findViewById(R.id.talkView));
-
-        peer.on(Peer.PeerEventEnum.OPEN, o -> {
-            if((ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
-                    && (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)){
-                ActivityCompat.requestPermissions(activity, new String[] {Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO}, 0);
-            }else{
-                vc.startLocalStream();
-            }
-        });
-
-        peer.on(Peer.PeerEventEnum.CLOSE, o -> Toast.makeText(MainActivity.this, R.string.vc_close, Toast.LENGTH_SHORT).show());
-
-        peer.on(Peer.PeerEventEnum.DISCONNECTED, o -> Toast.makeText(MainActivity.this, R.string.vc_disconn, Toast.LENGTH_SHORT).show());
-
-        peer.on(Peer.PeerEventEnum.ERROR, o -> Toast.makeText(MainActivity.this, R.string.vc_error, Toast.LENGTH_SHORT).show());
-
-        peer.on(Peer.PeerEventEnum.CONNECTION, o -> {
-            if(!(o instanceof DataConnection)){
-                return;
-            }
-            vc.setDataConnection((DataConnection)o);
-            vc.setDataCallbacks();
-            vc.turnLayout();
-        });
-
-        peer.on(Peer.PeerEventEnum.CALL, o -> {
-            if (!(o instanceof MediaConnection)) {
-                return;
-            }
-            vc.setMediaConnection((MediaConnection)o);
-        });
-
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-        Button callBtn = findViewById(R.id.callBtn);
-        callBtn.setOnClickListener(v -> {
-            v.setEnabled(false);
-
-            vc.callBtnClick();
-
-            v.setEnabled(true);
-        });
-
-        Button switchCameraAction = findViewById(R.id.switchCamera);
-        switchCameraAction.setOnClickListener(v -> {
-            vc.switchCameraAction();
-        });
-
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-        Button lay_visible = findViewById(R.id.btn_preview);
-        lay_visible.setOnClickListener(v -> {
-            FrameLayout call = findViewById(R.id.CallLayout);
-
-            if(call.getVisibility() == View.INVISIBLE) {
-                call.setVisibility(View.VISIBLE);
-            } else {
-                call.setVisibility(View.INVISIBLE);
-            }
-        });
-*/
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-/*
-
-        Button btn_reco = findViewById(R.id.btn_Reco);
-        btn_reco.setOnClickListener(v -> {
-            if(btnToggle) {
-                stopVoiceRecorder();
-                btnToggle = false;
-            }
-            else {
-                startVoiceRecorder();
-                btnToggle = true;
-            }
-        });
-*/
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-
-        String setLang = prefs.getString("lang", "kr");
-        assert setLang != null;
-
-        String src = "kr";
-        String target = "en";
-
-        if (setLang.equals("en")) {
-            src = "en";
-            target = "kr";
-        }
-        if (src.equals("kr")) {
-            lang = "ko-KR";
+        if(lang.equals("ko")) {
+            t.setText("(영어 ->) 한국어");
         } else {
-            lang = "en-US";
+            t.setText("(한국어 ->) 영어");
         }
-
-        translate = new Translate(handler, src, target);
-
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-/*
-        inputText = findViewById(R.id.inputText);
-
-        view = findViewById(R.id.textView);
-
-        if (src.equals("kr")) {
-            lang = "ko-KR";
-            view.setText("한국어 -> English");
-            btnToggle = true;
-        } else {
-            lang = "en-US";
-            view.setText("English -> 한국어");
-            btnToggle = false;
-        }
-
-        Button btn_change = findViewById(R.id.btn_change);
-        btn_change.setOnClickListener(v -> {
-            if (btnToggle) {
-                lang = "en-US";
-                view.setText("English -> 한국어");
-                translate.setParams("en", "kr");
-                btnToggle = false;
-            } else {
-                lang = "ko-KR";
-                view.setText("한국어 -> English");
-                translate.setParams("kr", "en");
-                btnToggle = true;
-            }
-        });
-*/
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -348,6 +200,7 @@ public class MainActivity extends AppCompatActivity {
             String attributeName = getString(attributeId);
             String value = sharedPref.getString(attributeName, defaultString);
             try {
+                assert value != null;
                 return Integer.parseInt(value);
             } catch (NumberFormatException e) {
                 Log.e(TAG, "Wrong setting for: " + attributeName + ":" + value);
@@ -445,6 +298,7 @@ public class MainActivity extends AppCompatActivity {
         if (videoWidth == 0 && videoHeight == 0) {
             String resolution =
                     sharedPref.getString(keyprefResolution, getString(R.string.pref_resolution_default));
+            assert resolution != null;
             String[] dimensions = resolution.split("[ x]+");
             if (dimensions.length == 2) {
                 try {
@@ -465,12 +319,12 @@ public class MainActivity extends AppCompatActivity {
         }
         if (cameraFps == 0) {
             String fps = sharedPref.getString(keyprefFps, getString(R.string.pref_fps_default));
+            assert fps != null;
             String[] fpsValues = fps.split("[ x]+");
             if (fpsValues.length == 2) {
                 try {
                     cameraFps = Integer.parseInt(fpsValues[0]);
                 } catch (NumberFormatException e) {
-                    cameraFps = 0;
                     Log.e(TAG, "Wrong camera fps setting: " + fps);
                 }
             }
@@ -489,9 +343,11 @@ public class MainActivity extends AppCompatActivity {
         if (videoStartBitrate == 0) {
             String bitrateTypeDefault = getString(R.string.pref_maxvideobitrate_default);
             String bitrateType = sharedPref.getString(keyprefVideoBitrateType, bitrateTypeDefault);
+            assert bitrateType != null;
             if (!bitrateType.equals(bitrateTypeDefault)) {
                 String bitrateValue = sharedPref.getString(
                         keyprefVideoBitrateValue, getString(R.string.pref_maxvideobitratevalue_default));
+                assert bitrateValue != null;
                 videoStartBitrate = Integer.parseInt(bitrateValue);
             }
         }
@@ -503,9 +359,11 @@ public class MainActivity extends AppCompatActivity {
         if (audioStartBitrate == 0) {
             String bitrateTypeDefault = getString(R.string.pref_startaudiobitrate_default);
             String bitrateType = sharedPref.getString(keyprefAudioBitrateType, bitrateTypeDefault);
+            assert bitrateType != null;
             if (!bitrateType.equals(bitrateTypeDefault)) {
                 String bitrateValue = sharedPref.getString(
                         keyprefAudioBitrateValue, getString(R.string.pref_startaudiobitratevalue_default));
+                assert bitrateValue != null;
                 audioStartBitrate = Integer.parseInt(bitrateValue);
             }
         }
@@ -630,33 +488,4 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    // 번역 메시지 핸들러
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            switch (msg.what) {
-                case R.id.translateCode:
-                    Toast.makeText(MainActivity.this, "responseCode >> " + msg.arg1, Toast.LENGTH_SHORT).show();
-
-                    break;
-
-                case R.id.translateResult:
-                    //TextView textView = findViewById(R.id.talkView);
-                    //textView.setText(msg.obj.toString());
-
-                    break;
-
-                case R.id.translateError:
-                    Toast.makeText(MainActivity.this, msg.obj.toString(), Toast.LENGTH_SHORT).show();
-
-                    break;
-
-                default:
-            }
-        }
-    };
 }
