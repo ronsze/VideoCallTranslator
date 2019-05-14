@@ -34,9 +34,6 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -208,8 +205,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
   private static final ExecutorService executor = Executors.newSingleThreadExecutor();
   private SpeechService mSpeechService;
   private TextView receiveText;
-  private EditText sendText;
-  private TextView sendTextPrev;
+  private TextView sendText;
 
   private String originText;
   private String transText;
@@ -270,7 +266,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         | LayoutParams.FLAG_SHOW_WHEN_LOCKED | LayoutParams.FLAG_TURN_SCREEN_ON);
     getWindow().getDecorView().setSystemUiVisibility(getSystemUiVisibility());
     setContentView(R.layout.activity_call);
-    
+
     connected = false;
     signalingParameters = null;
 
@@ -431,8 +427,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     receiveText = findViewById(R.id.receiveMsg);
     sendText = findViewById(R.id.sendMsg);
-    sendTextPrev = findViewById(R.id.sendMsgPrev);
-    Button sendBtn = findViewById(R.id.sendBtn);
 
     // Create peer connection client.
     peerConnectionClient = new PeerConnectionClient(
@@ -449,15 +443,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
       startCall();
     }
 
-    sendBtn.setOnClickListener(v -> {
-      if(sendText != null && sendText.length() > 0){
-        peerConnectionClient.sendMsg(sendText.getText().toString());
-        sendTextPrev.setText(sendText.getText());
-        sendText.setText("");
-      }
-    });
-
-    ImageButton toggleButton = findViewById(R.id.button_toggle_translate);
+    /*ImageButton toggleButton = findViewById(R.id.button_toggle_translate);
     toggleButton.setOnClickListener(view -> {
       toggleTrans = !toggleTrans;
       toggleButton.setAlpha(toggleTrans ? 1.0f : 0.3f);
@@ -466,7 +452,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         receiveText.setText(transText);
       else
         receiveText.setText(originText);
-    });
+    });*/
 
     String src = "kr";
     String target = "en";
@@ -1052,7 +1038,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
               }
               if (sendText != null && !TextUtils.isEmpty(text)) {
                 runOnUiThread(() -> {
-                  //peerConnectionClient.sendMsg(text);
+                  peerConnectionClient.sendMsg(text);
                   sendText.setText(text);
                 });
               }
