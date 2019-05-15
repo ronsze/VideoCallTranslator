@@ -31,17 +31,18 @@ import android.util.Log;
 import com.google.auth.Credentials;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.cloud.speech.v1.RecognitionAudio;
-import com.google.cloud.speech.v1.RecognitionConfig;
-import com.google.cloud.speech.v1.RecognizeRequest;
-import com.google.cloud.speech.v1.RecognizeResponse;
-import com.google.cloud.speech.v1.SpeechGrpc;
-import com.google.cloud.speech.v1.SpeechRecognitionAlternative;
-import com.google.cloud.speech.v1.SpeechRecognitionResult;
-import com.google.cloud.speech.v1.StreamingRecognitionConfig;
-import com.google.cloud.speech.v1.StreamingRecognitionResult;
-import com.google.cloud.speech.v1.StreamingRecognizeRequest;
-import com.google.cloud.speech.v1.StreamingRecognizeResponse;
+import com.google.cloud.speech.v1p1beta1.RecognitionAudio;
+import com.google.cloud.speech.v1p1beta1.RecognitionConfig;
+import com.google.cloud.speech.v1p1beta1.RecognizeRequest;
+import com.google.cloud.speech.v1p1beta1.RecognizeResponse;
+import com.google.cloud.speech.v1p1beta1.SpeechGrpc;
+import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
+import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
+import com.google.cloud.speech.v1p1beta1.StreamingRecognitionConfig;
+import com.google.cloud.speech.v1p1beta1.StreamingRecognitionResult;
+import com.google.cloud.speech.v1p1beta1.StreamingRecognizeRequest;
+import com.google.cloud.speech.v1p1beta1.StreamingRecognizeResponse;
+import com.google.cloud.speech.v1p1beta1.RecognitionConfig.AudioEncoding;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;
@@ -261,8 +262,9 @@ public class SpeechService extends Service {
                 .setStreamingConfig(StreamingRecognitionConfig.newBuilder()
                         .setConfig(RecognitionConfig.newBuilder()
                                 .setLanguageCode(lang)
-                                .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16)
+                                .setEncoding(AudioEncoding.LINEAR16)
                                 .setSampleRateHertz(16000)
+                                .setEnableAutomaticPunctuation(true)
                                 .build())
                         .setInterimResults(true)
                         .setSingleUtterance(true)

@@ -24,10 +24,6 @@ import androidx.annotation.NonNull;
 import org.webrtc.audio.JavaAudioDeviceModule;
 import org.webrtc.audio.JavaAudioDeviceModule.SamplesReadyCallback;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 
 
@@ -39,6 +35,8 @@ import java.util.concurrent.ExecutorService;
  * {@link AudioFormat#CHANNEL_IN_MONO}. This class will automatically pick the right sample rate
  */
 public class VoiceRecorder implements SamplesReadyCallback {
+
+    private static final String TAG = "VoiceRecorder";
 
     private static final int AMPLITUDE_THRESHOLD = 1500;
     private static final int SPEECH_TIMEOUT_MILLIS = 2000;
@@ -58,7 +56,7 @@ public class VoiceRecorder implements SamplesReadyCallback {
          * @param data The audio data in {@link AudioFormat#ENCODING_PCM_16BIT}.
          * @param size The size of the actual data in {@code data}.
          */
-        public void onVoice(InputStream inputStream) {
+        public void onVoice(byte[] data, int size) {
         }
 
         /**
@@ -71,8 +69,6 @@ public class VoiceRecorder implements SamplesReadyCallback {
     private final Callback mCallback;
 
     private byte[] mBuffer;
-
-    private ByteArrayOutputStream mByteBuffer;
 
     private int size;
 
@@ -91,8 +87,6 @@ public class VoiceRecorder implements SamplesReadyCallback {
     public VoiceRecorder(@NonNull Callback callback, ExecutorService executor) {
         mCallback = callback;
         this.executor = executor;
-
-        mByteBuffer = new ByteArrayOutputStream();
     }
 
     /**
@@ -119,11 +113,6 @@ public class VoiceRecorder implements SamplesReadyCallback {
             dismiss();
 
             mBuffer = null;
-            try {
-                mByteBuffer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -137,12 +126,6 @@ public class VoiceRecorder implements SamplesReadyCallback {
         }
     }
 
-    /**
-     * Retrieves the sample rate currently used to record audio.
-     *
-     * @return The sample rate of recorded audio.
-     */
-
     @Override
     public void onWebRtcAudioRecordSamplesReady(JavaAudioDeviceModule.AudioSamples samples) {
         if (!isRunning) return;
@@ -152,6 +135,7 @@ public class VoiceRecorder implements SamplesReadyCallback {
             Log.e("SamplesReady", "Invalid audio format");
             return;
         }
+
         // Append the recorded 16-bit audio samples to the open output file.
         executor.execute(() -> {
             mBuffer = null;
@@ -163,26 +147,22 @@ public class VoiceRecorder implements SamplesReadyCallback {
                     return;
                 }
 
-                try {
-                    final long now = System.currentTimeMillis();
-                    if (isHearingVoice(mBuffer, size)) {
-                        if (mLastVoiceHeardMillis == Long.MAX_VALUE) {
-                            mVoiceStartedMillis = now;
-                            mCallback.onVoiceStart();
-                        }
-                        mByteBuffer.write(mBuffer);
-                        mLastVoiceHeardMillis = now;
-                        if (now - mVoiceStartedMillis > MAX_SPEECH_LENGTH_MILLIS) {
-                            end();
-                        }
-                    } else if (mLastVoiceHeardMillis != Long.MAX_VALUE) {
-                        mByteBuffer.write(mBuffer);
-                        if (now - mLastVoiceHeardMillis > SPEECH_TIMEOUT_MILLIS) {
-                            end();
-                        }
+                final long now = System.currentTimeMillis();
+                if (isHearingVoice(mBuffer, size)) {
+                    if (mLastVoiceHeardMillis == Long.MAX_VALUE) {
+                        mVoiceStartedMillis = now;
+                        mCallback.onVoiceStart();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    mCallback.onVoice(mBuffer, size);
+                    mLastVoiceHeardMillis = now;
+                    if (now - mVoiceStartedMillis > MAX_SPEECH_LENGTH_MILLIS) {
+                        end();
+                    }
+                } else if (mLastVoiceHeardMillis != Long.MAX_VALUE) {
+                    mCallback.onVoice(mBuffer, size);
+                    if (now - mLastVoiceHeardMillis > SPEECH_TIMEOUT_MILLIS) {
+                        end();
+                    }
                 }
             }
         });
@@ -190,11 +170,7 @@ public class VoiceRecorder implements SamplesReadyCallback {
 
     private void end() {
         mLastVoiceHeardMillis = Long.MAX_VALUE;
-        byte[] buffer = mByteBuffer.toByteArray();
-        mCallback.onVoice(new ByteArrayInputStream(buffer));
         mCallback.onVoiceEnd();
-
-        mByteBuffer.reset();
     }
 
     private boolean isHearingVoice(byte[] buffer, int size) {

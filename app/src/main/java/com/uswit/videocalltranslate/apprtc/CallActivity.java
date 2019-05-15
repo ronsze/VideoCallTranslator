@@ -219,21 +219,32 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     @Override
     public void onVoiceStart() {
       Log.e("onVoice", "말을 시작");
-
-      mSpeechService.setLang(lang);
+      if(mSpeechService != null) {
+        mSpeechService.setLang(lang);
+        mSpeechService.startRecognizing();
+      }
     }
-
+/*
     @Override
     public void onVoice(InputStream inputStream) {
       if (mSpeechService != null) {
         mSpeechService.recognizeInputStream(inputStream);
       }
     }
+*/
 
     @Override
-    public void onVoiceEnd() {
-      Log.e("onVoice", "말 끝");
+    public void onVoice(byte[] data, int size) {
+      if (mSpeechService != null) {
+        mSpeechService.recognize(data, size);
+      }
     }
+
+    @Override
+    public void onVoiceEnd() { Log.e("onVoice", "말 끝");
+      if (mSpeechService != null) {
+        mSpeechService.finishRecognizing();
+      }}
 
   };
 
