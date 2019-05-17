@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('support-v4-26.0.0-alpha1-sources.jar'))

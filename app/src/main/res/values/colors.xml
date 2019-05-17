@@ -2,7 +2,7 @@
 <resources>
     <color name="colorPrimary">@android:color/holo_blue_bright</color>
     <color name="colorPrimaryDark">@android:color/holo_blue_bright</color>
-    <color name="colorAccent">#D81B60</color>
+    <color name="colorAccent">#9666B62C</color>
     <color name="togglebtnClick">@android:color/holo_blue_bright</color>
     <color name="togglebtnNon">#DEDEDE</color>
     <color name="textBackground">#30000000</color>
