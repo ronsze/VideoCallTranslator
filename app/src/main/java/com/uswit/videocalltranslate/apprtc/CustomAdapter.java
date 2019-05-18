@@ -2,6 +2,7 @@ package com.uswit.videocalltranslate.apprtc;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Environment;
 import android.os.Handler;
@@ -123,6 +124,11 @@ public class CustomAdapter extends BaseAdapter {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        AudioManager audio = null;
+        audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        int maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        audio.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume/2, 0);
 
         play_stop.setOnClickListener(new View.OnClickListener() {
             @Override
