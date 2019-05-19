@@ -26,6 +26,7 @@ import java.util.ArrayList;
 public class CustomAdapter extends BaseAdapter {
 
     private String language;
+    private String remoteLang;
 
     private ArrayList<AdapterContent> items = new ArrayList<>();
 
@@ -36,8 +37,9 @@ public class CustomAdapter extends BaseAdapter {
     private int prevpos;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    CustomAdapter(String _lang, Context _context) {
+    CustomAdapter(String _lang, String _remoteLang, Context _context) {
         language = _lang;
+        remoteLang = _remoteLang;
         context = _context;
     }
 
@@ -111,7 +113,7 @@ public class CustomAdapter extends BaseAdapter {
                 new Thread() {
                     public void run() {
                         try {
-                            NaverTTSTask mNaverTTSTask = new NaverTTSTask(items.get(pos).lang.equals("ko") ? 0 : 1);
+                            NaverTTSTask mNaverTTSTask = new NaverTTSTask(items.get(pos).lang.equals("ko") ? 1 : 0);
                             mNaverTTSTask.setText(items.get(pos).msg);
                             mNaverTTSTask.execute();
 
@@ -187,6 +189,7 @@ public class CustomAdapter extends BaseAdapter {
         String transText;
 
         String lang;
+        String lang_remote;
 
         TextView msgBox;
 
@@ -196,20 +199,22 @@ public class CustomAdapter extends BaseAdapter {
             msg = _msg;
             type = _type;
             lang = language;
+            lang_remote = remoteLang;
 
             originalText = msg;
 
             String src;
             String target;
+
             if (language.equals("ko")) {
                 if(type == 1){
-                    lang = "en";
+                    lang = lang_remote;
                 }
                 src = "en";
                 target = "kr";
             } else {
                 if(type == 1){
-                    lang = "ko";
+                    lang = lang_remote;
                 }
                 src = "kr";
                 target = "en";

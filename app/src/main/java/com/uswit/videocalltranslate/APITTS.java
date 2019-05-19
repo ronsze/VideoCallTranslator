@@ -37,7 +37,7 @@ public class APITTS {
 
             postParams = "speaker=mijin&speed=0&text=" + text;
 
-            if(type == 0) {
+            if(type == 1) {
                 postParams = "speaker=clara&speed=0&text=" + text;
             }
 

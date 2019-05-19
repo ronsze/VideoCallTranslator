@@ -65,28 +65,12 @@
             app:layout_constraintBottom_toTopOf="@+id/bubble_send"
             app:layout_constraintEnd_toEndOf="@+id/fullscreen_video_view"
             app:layout_constraintStart_toStartOf="@+id/fullscreen_video_view"
-            app:layout_constraintTop_toBottomOf="@+id/pip_video_view">
-
-            <EditText
-                android:id="@+id/text123"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="textPersonName" />
-
-            <Button
-                android:id="@+id/text1234"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Button" />
-        </LinearLayout>
+            app:layout_constraintTop_toBottomOf="@+id/pip_video_view"/>
 
         <LinearLayout
             android:id="@+id/bubble_receive"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
             android:alpha="0.7"
             android:background="@drawable/bubble_receive"
             android:gravity="center"
@@ -104,7 +88,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/white"
-                android:textSize="24sp" />
+                android:textSize="16sp" />
 
         </LinearLayout>
 
@@ -112,8 +96,6 @@
             android:id="@+id/bubble_send"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
             android:alpha="0.7"
             android:background="@drawable/bubble_send"
             android:gravity="center"
@@ -130,7 +112,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@android:color/white"
-                android:textSize="24sp" />
+                android:textSize="16sp" />
 
         </LinearLayout>
 
@@ -140,7 +122,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="@color/textBackground"
+        android:background="@color/colorAccent"
         android:baselineAligned="false">
 
         <ListView

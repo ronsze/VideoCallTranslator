@@ -216,14 +216,15 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     private String originText;
     private String transText;
-    private boolean toggleTrans = true;
-
     private String lang;
+    private String tossLang;
+    private String receiveAdapterStr;
+
+    private boolean toggleTrans = true;
 
     private VoiceRecorder mVoiceRecorder;
 
     private StringBuffer recordText = new StringBuffer();
-    private StringBuffer recordText_List = new StringBuffer();
 
     private ListView recordList;
 
@@ -231,6 +232,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     private Button test1;
     private EditText test2;
+
+    private Context context;
 
     private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
 
@@ -292,6 +295,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
         connected = false;
         signalingParameters = null;
+        context = this.getApplicationContext();
 
         // Create UI controls.
         pipRenderer = findViewById(R.id.pip_video_view);
@@ -451,9 +455,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         receiveText = findViewById(R.id.receiveMsg);
         sendText = findViewById(R.id.sendMsg);
 
-        test1 = findViewById(R.id.text1234);
-        test2 = findViewById(R.id.text123);
-
         // Create peer connection client.
         peerConnectionClient = new PeerConnectionClient(
                 getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this, mVoiceRecorder, new MsgHandler());
@@ -480,6 +481,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         receiveText.setText(originText);
     });*/
 
+        tossLang = lang;
+
         String src = "kr";
         String target = "en";
 
@@ -493,22 +496,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             lang = "en-US";
         }
 
-        translate = new Translate(handler, src, target);
-
+        adapter = new CustomAdapter(lang.equals("en-US") ? "ko" : "en", "ko", context);
         setListView();
 
-        test1.setOnClickListener(v -> {
-            if(test2.getText() != null && test2.length() > 0) {
-                adapter.add(test2.getText().toString(), testType);
-                updateHandler.sendEmptyMessage(0);
-                test2.setText("");
-                if(testType == 0) {
-                    testType = 1;
-                }else{
-                    testType = 0;
-                }
-            }
-        });
+        translate = new Translate(handler, src, target);
     }
 
     @TargetApi(17)
@@ -645,7 +636,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logToast.cancel();
         }
         activityRunning = false;
-        boolean listOn = false;
         super.onDestroy();
     }
 
@@ -1019,6 +1009,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         runOnUiThread(() -> logAndToast("ICE disconnected"));
     }
 
+
     @Override
     public void onConnected() {
         final long delta = System.currentTimeMillis() - callStartedTimeMs;
@@ -1026,6 +1017,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logAndToast("DTLS connected, delay=" + delta + "ms");
             connected = true;
             callConnected();
+
+            peerConnectionClient.sendMsg(tossLang);
         });
     }
 
@@ -1072,7 +1065,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         }
         Log.e("VoiceRecorder", "중지");
     }
-
+    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    //메시지 발신
     private final SpeechService.Listener mSpeechServiceListener =
             new SpeechService.Listener() {
                 @Override
@@ -1080,6 +1074,12 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     Log.e("onSpeech", "인식");
                     if (isFinal) {
                         mVoiceRecorder.dismiss();
+                        runOnUiThread(() ->{
+                            adapter.add(text, 0);
+                            adapter.notifyDataSetChanged();
+                            peerConnectionClient.sendMsg("-end-");
+                            recordText.append(text + "<local>");
+                        });
                     }
                     if (sendText != null && !TextUtils.isEmpty(text)) {
                         runOnUiThread(() -> {
@@ -1089,13 +1089,29 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     }
                 }
             };
-
+    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    //메시지 수신
     @SuppressLint("HandlerLeak")
     class MsgHandler extends Handler {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            originText = msg.obj.toString();
-            translate.run(originText);
+
+            if(msg.obj.equals("-end-")){
+                runOnUiThread(()->{
+                    adapter.add(receiveAdapterStr, 1);
+                    adapter.notifyDataSetChanged();
+                    recordText.append(receiveAdapterStr + "remote");
+                });
+            }else {
+                if (adapter == null) {
+                    adapter = new CustomAdapter(lang.equals("en-US") ? "ko" : "en", tossLang, context);
+                    setListView();
+                } else {
+                    originText = msg.obj.toString();
+                    receiveAdapterStr = msg.obj.toString();
+                    translate.run(originText);
+                }
+            }
         }
     }
 
@@ -1136,47 +1152,10 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 채팅 내역
 
-    String text;
-
     void setListView() {
         recordList = findViewById(R.id.recordList_Call);
-        adapter = new CustomAdapter(lang.equals("ko-KR") ? "ko" : "en", this.getApplicationContext());
-
-        recordText_List.delete(0, 1);
-
-        recordText_List.append("Hello<local>안녕<remote>Nice to meet you<local>안녕하세요<remote>How are you<local>번역<remote>Thanks<local>반갑습니다<remote>");
-
-        int localIndex = recordText_List.indexOf("<local>");
-        int remoteIndex = recordText_List.indexOf("<remote>");
-
+        
         recordList.setAdapter(adapter);
-
-        while (localIndex != -1 || remoteIndex != -1) {
-            if (((localIndex < remoteIndex) && localIndex != -1) || remoteIndex == -1) {
-                text = recordText_List.substring(0, localIndex);
-                recordText_List.delete(0, localIndex + "<local>".length());
-                adapter.add(text, 0);
-            } else if (remoteIndex < localIndex || localIndex == -1) {
-                text = recordText_List.substring(0, remoteIndex);
-                recordText_List.delete(0, remoteIndex + "<remote>".length());
-                adapter.add(text, 1);
-            }
-
-            localIndex = recordText_List.indexOf("<local>");
-            remoteIndex = recordText_List.indexOf("<remote>");
-        }
-    }
-
-    public void sendRecord(String msg) {
-        recordText.append(msg).append("<local>");
-        recordText_List.append(msg).append("<local>");
-        updateHandler.sendEmptyMessage(0);
-    }
-
-    public void receiveRecord(String msg) {
-        recordText.append(msg).append("<remote>");
-        recordText_List.append(msg).append("<remote>");
-        updateHandler.sendEmptyMessage(0);
     }
 
     @SuppressLint("HandlerLeak")
