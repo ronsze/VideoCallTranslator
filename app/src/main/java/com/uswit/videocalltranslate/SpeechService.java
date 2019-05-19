@@ -50,7 +50,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -287,7 +286,6 @@ public class SpeechService extends Service {
         if (mRequestObserver == null) {
             return;
         }
-        Log.e(TAG, Arrays.toString(data));
         // Call the streaming recognition API
         mRequestObserver.onNext(StreamingRecognizeRequest.newBuilder()
                 .setAudioContent(ByteString.copyFrom(data, 0, size))

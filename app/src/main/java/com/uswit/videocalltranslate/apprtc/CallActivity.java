@@ -227,14 +227,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     private ListView recordList;
 
-    private boolean listOn = true;
-
-    private int localIndex;
-    private int remoteIndex;
-
     CustomAdapter adapter;
-
-    Handler listHandler;
 
     private Button test1;
     private EditText test2;
@@ -249,14 +242,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                 mSpeechService.startRecognizing();
             }
         }
-/*
-    @Override
-    public void onVoice(InputStream inputStream) {
-      if (mSpeechService != null) {
-        mSpeechService.recognizeInputStream(inputStream);
-      }
-    }
-*/
 
         @Override
         public void onVoice(byte[] data, int size) {
@@ -466,9 +451,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         receiveText = findViewById(R.id.receiveMsg);
         sendText = findViewById(R.id.sendMsg);
 
-        test1 = (Button) findViewById(R.id.text1234);
-        test2 = (EditText) findViewById(R.id.text123);
-
+        test1 = findViewById(R.id.text1234);
+        test2 = findViewById(R.id.text123);
 
         // Create peer connection client.
         peerConnectionClient = new PeerConnectionClient(
@@ -513,18 +497,15 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
         setListView();
 
-        test1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(test2.getText() != null && test2.length() > 0) {
-                    adapter.add(test2.getText().toString(), testType);
-                    updateHandler.sendEmptyMessage(0);
-                    test2.setText("");
-                    if(testType == 0) {
-                        testType = 1;
-                    }else{
-                        testType = 0;
-                    }
+        test1.setOnClickListener(v -> {
+            if(test2.getText() != null && test2.length() > 0) {
+                adapter.add(test2.getText().toString(), testType);
+                updateHandler.sendEmptyMessage(0);
+                test2.setText("");
+                if(testType == 0) {
+                    testType = 1;
+                }else{
+                    testType = 0;
                 }
             }
         });
@@ -664,7 +645,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logToast.cancel();
         }
         activityRunning = false;
-        listOn = false;
+        boolean listOn = false;
         super.onDestroy();
     }
 
@@ -1152,18 +1133,21 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         }
     };
 
+    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+    // 채팅 내역
+
     String text;
 
     void setListView() {
-        recordList = (ListView) findViewById(R.id.recordList_Call);
+        recordList = findViewById(R.id.recordList_Call);
         adapter = new CustomAdapter(lang.equals("ko-KR") ? "ko" : "en", this.getApplicationContext());
 
         recordText_List.delete(0, 1);
 
         recordText_List.append("Hello<local>안녕<remote>Nice to meet you<local>안녕하세요<remote>How are you<local>번역<remote>Thanks<local>반갑습니다<remote>");
 
-        localIndex = recordText_List.indexOf("<local>");
-        remoteIndex = recordText_List.indexOf("<remote>");
+        int localIndex = recordText_List.indexOf("<local>");
+        int remoteIndex = recordText_List.indexOf("<remote>");
 
         recordList.setAdapter(adapter);
 
@@ -1172,7 +1156,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                 text = recordText_List.substring(0, localIndex);
                 recordText_List.delete(0, localIndex + "<local>".length());
                 adapter.add(text, 0);
-            } else if (((remoteIndex < localIndex) && remoteIndex != -1) || localIndex == -1) {
+            } else if (remoteIndex < localIndex || localIndex == -1) {
                 text = recordText_List.substring(0, remoteIndex);
                 recordText_List.delete(0, remoteIndex + "<remote>".length());
                 adapter.add(text, 1);
@@ -1184,17 +1168,18 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     }
 
     public void sendRecord(String msg) {
-        recordText.append(msg + "<local>");
-        recordText_List.append(msg + "<local>");
+        recordText.append(msg).append("<local>");
+        recordText_List.append(msg).append("<local>");
         updateHandler.sendEmptyMessage(0);
     }
 
     public void receiveRecord(String msg) {
-        recordText.append(msg + "<remote>");
-        recordText_List.append(msg + "<remote>");
+        recordText.append(msg).append("<remote>");
+        recordText_List.append(msg).append("<remote>");
         updateHandler.sendEmptyMessage(0);
     }
 
+    @SuppressLint("HandlerLeak")
     Handler updateHandler = new Handler() {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);

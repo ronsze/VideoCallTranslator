@@ -72,8 +72,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ems="10"
-                android:inputType="textPersonName"
-                android:text="Name" />
+                android:inputType="textPersonName" />
 
             <Button
                 android:id="@+id/text1234"
@@ -86,6 +85,8 @@
             android:id="@+id/bubble_receive"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:alpha="0.7"
             android:background="@drawable/bubble_receive"
             android:gravity="center"
@@ -111,6 +112,8 @@
             android:id="@+id/bubble_send"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             android:alpha="0.7"
             android:background="@drawable/bubble_send"
             android:gravity="center"
@@ -137,13 +140,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="@color/colorAccent">
+        android:background="@color/textBackground"
+        android:baselineAligned="false">
 
         <ListView
             android:id="@+id/recordList_Call"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:divider="#00000000">
 
         </ListView>
 

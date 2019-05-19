@@ -24,8 +24,6 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.uswit.videocalltranslate.R;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

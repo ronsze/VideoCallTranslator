@@ -2,6 +2,7 @@ package com.uswit.videocalltranslate;
 
 import android.media.MediaPlayer;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -49,6 +50,7 @@ public class APITTS {
             int responseCode = con.getResponseCode();
             BufferedReader br;
             if(responseCode==200) { // 정상 호출
+                Log.e("APITTS", "정상호출");
                 InputStream is = con.getInputStream();
                 int read = 0;
                 byte[] bytes = new byte[1024];
@@ -62,6 +64,7 @@ public class APITTS {
 
                 is.close();
             } else {  // 에러 발생
+                Log.e("APITTS", "에러");
                 br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
                 String inputLine;
                 StringBuffer response = new StringBuffer();
@@ -69,10 +72,10 @@ public class APITTS {
                     response.append(inputLine);
                 }
                 br.close();
-                System.out.println(response.toString());
+                Log.e("APITTS", response.toString());
             }
         } catch (Exception e) {
-            System.out.println(e);
+            Log.e("APITTS", e.toString());
         }
     }
 }
