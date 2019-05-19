@@ -1,6 +1,7 @@
 package com.uswit.videocalltranslate;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,11 +13,9 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.URLUtil;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.TextView;
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -25,9 +24,9 @@ import com.uswit.videocalltranslate.apprtc.CallActivity;
 
 import java.util.Random;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "ConnectActivity";
 
     String lang;
 
@@ -47,21 +46,16 @@ public class MainActivity extends AppCompatActivity {
     private String keyprefRoomServerUrl;
     private String keyprefRoom;
 
-/*
-    private static final String API_KEY = "0e98a437-bce9-44fa-a165-c84b8d4fd4e1";
-    private static final String DOMAIN = "192.168.1.16";
-
-    VideoCall vc;
-*/
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
         getWindow().addFlags(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        setContentView(R.layout.activity_main);
 
         if((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
                 || (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
@@ -102,13 +96,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         lang = prefs.getString("lang", "ko");
-        TextView t = findViewById(R.id.textView2);
 
-        if(lang.equals("ko")) {
-            t.setText("(영어 ->) 한국어");
-        } else {
-            t.setText("(한국어 ->) 영어");
-        }
+        Button langSet = findViewById(R.id.btn_langset);
+        langSet.setOnClickListener(view -> {
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean("setbool", false);
+            editor.apply();
+
+            startActivity(new Intent(this, IntroActivity.class));
+
+            finish();
+        });
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -124,12 +122,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
     }
 
     @Override
     protected void onPause() {
-        //setVolumeControlStream(AudioManager.USE_DEFAULT_STREAM_TYPE);
         super.onPause();
     }
 
@@ -143,27 +139,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        //vc.destroyPeer();
         super.onDestroy();
     }
-
-
-/*
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case 0: {
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    vc.startLocalStream();
-                }
-                else {
-                    Toast.makeText(this,"Failed to access the camera and microphone.\nclick allow when asked for permission.", Toast.LENGTH_LONG).show();
-                }
-                break;
-            }
-        }
-    }
-*/
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 영상통화

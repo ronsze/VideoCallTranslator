@@ -24,6 +24,7 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -34,17 +35,20 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.drawerlayout.widget.DrawerLayout;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.RuntimeException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -207,30 +211,29 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     private HudFragment hudFragment;
     private CpuMonitor cpuMonitor;
 
+    private String roomId;
+    private boolean isSaved = false;
+
     Translate translate;
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private SpeechService mSpeechService;
     private TextView receiveText;
     private TextView sendText;
-
-    private String originText;
     private String transText;
-    private boolean toggleTrans = true;
 
     private String lang;
+    private String receiveAdapterStr;
 
     private VoiceRecorder mVoiceRecorder;
 
     private StringBuffer recordText = new StringBuffer();
-    private StringBuffer recordText_List = new StringBuffer();
 
     private ListView recordList;
 
     CustomAdapter adapter;
 
-    private Button test1;
-    private EditText test2;
+    private Context context;
 
     private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
 
@@ -292,6 +295,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
         connected = false;
         signalingParameters = null;
+        context = this.getApplicationContext();
 
         // Create UI controls.
         pipRenderer = findViewById(R.id.pip_video_view);
@@ -360,7 +364,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         }
 
         // Get Intent parameters.
-        String roomId = intent.getStringExtra(EXTRA_ROOMID);
+        roomId = intent.getStringExtra(EXTRA_ROOMID);
         Log.d(TAG, "Room ID: " + roomId);
         if (roomId == null || roomId.length() == 0) {
             logAndToast(getString(R.string.missing_url));
@@ -451,9 +455,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         receiveText = findViewById(R.id.receiveMsg);
         sendText = findViewById(R.id.sendMsg);
 
-        test1 = findViewById(R.id.text1234);
-        test2 = findViewById(R.id.text123);
-
         // Create peer connection client.
         peerConnectionClient = new PeerConnectionClient(
                 getApplicationContext(), eglBase, peerConnectionParameters, CallActivity.this, mVoiceRecorder, new MsgHandler());
@@ -469,46 +470,19 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             startCall();
         }
 
-    /*ImageButton toggleButton = findViewById(R.id.button_toggle_translate);
-    toggleButton.setOnClickListener(view -> {
-      toggleTrans = !toggleTrans;
-      toggleButton.setAlpha(toggleTrans ? 1.0f : 0.3f);
-
-      if(toggleTrans)
-        receiveText.setText(transText);
-      else
-        receiveText.setText(originText);
-    });*/
-
-        String src = "kr";
-        String target = "en";
-
-        if (lang.equals("ko")) {
-            src = "en";
-            target = "kr";
-        }
         if (lang.equals("ko")) {
             lang = "ko-KR";
         } else {
             lang = "en-US";
         }
 
-        translate = new Translate(handler, src, target);
-
+        adapter = new CustomAdapter(context);
         setListView();
 
-        test1.setOnClickListener(v -> {
-            if(test2.getText() != null && test2.length() > 0) {
-                adapter.add(test2.getText().toString(), testType);
-                updateHandler.sendEmptyMessage(0);
-                test2.setText("");
-                if(testType == 0) {
-                    testType = 1;
-                }else{
-                    testType = 0;
-                }
-            }
-        });
+        translate = new Translate(handler);
+
+        DrawerLayout drawerLayout = findViewById(R.id.drawer);
+        drawerLayout.setScrimColor(getResources().getColor(android.R.color.transparent));
     }
 
     @TargetApi(17)
@@ -645,7 +619,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logToast.cancel();
         }
         activityRunning = false;
-        boolean listOn = false;
+
         super.onDestroy();
     }
 
@@ -781,6 +755,58 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         } else {
             setResult(RESULT_CANCELED);
         }
+
+        if(!isSaved) {
+            @SuppressLint("SimpleDateFormat") String getTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+            File storeDir = new File(context.getExternalFilesDir(null), "chat");
+
+            if (!storeDir.exists()) {
+                if (!storeDir.mkdirs()) {
+                    Log.e("chat", "failed to create directory");
+                    return;
+                }
+            }
+
+            File roomDir = new File(storeDir, roomId);
+
+            if (!roomDir.exists()) {
+                if (!roomDir.mkdirs()) {
+                    Log.e("room", "failed to create directory");
+                    return;
+                }
+            }
+
+            File file = new File(roomDir, getTime);
+
+            Log.e("file", file.getPath());
+            Log.e("recordText", recordText.toString());
+
+            FileWriter fw = null;
+
+            try {
+                // open file.
+                fw = new FileWriter(file);
+
+                // write file.
+                fw.write(recordText.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // close file.
+            if (fw != null) {
+                // catch Exception here or throw.
+                try {
+                    fw.close();
+                    isSaved = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
         finish();
     }
 
@@ -1026,6 +1052,11 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logAndToast("DTLS connected, delay=" + delta + "ms");
             connected = true;
             callConnected();
+
+            assert peerConnectionClient != null;
+            peerConnectionClient.sendMsg(lang);
+
+            startVoiceRecorder();
         });
     }
 
@@ -1080,10 +1111,20 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     Log.e("onSpeech", "인식");
                     if (isFinal) {
                         mVoiceRecorder.dismiss();
+                        String sendText = text + "|" + lang;
+                        peerConnectionClient.sendMsg(sendText);
+
+                        runOnUiThread(() ->{
+                            adapter.add(new AdapterContent.Builder(text, R.id.chat_local)
+                                    .setLang(lang)
+                                    .build());
+                            adapter.notifyDataSetChanged();
+                            peerConnectionClient.sendMsg("-end-");
+                            recordText.append(sendText).append("<local>");
+                        });
                     }
                     if (sendText != null && !TextUtils.isEmpty(text)) {
                         runOnUiThread(() -> {
-                            peerConnectionClient.sendMsg(text);
                             sendText.setText(text);
                         });
                     }
@@ -1094,8 +1135,19 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     class MsgHandler extends Handler {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            originText = msg.obj.toString();
-            translate.run(originText);
+
+            if(msg.obj.equals("-end-")) {
+                runOnUiThread(() -> recordText.append(receiveAdapterStr).append("<remote>"));
+            }else if(!msg.obj.equals("ko-KR") && !msg.obj.equals("en-US")) {
+                if (adapter == null) {
+                    adapter = new CustomAdapter(context);
+                    setListView();
+                } else {
+                    receiveAdapterStr = msg.obj.toString();
+                    Log.e("receive", receiveAdapterStr);
+                    translate.run(receiveAdapterStr.split("\\|")[0], receiveAdapterStr.split("\\|")[1]);
+                }
+            }
         }
     }
 
@@ -1116,10 +1168,15 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                 case R.id.translateResult:
                     transText = msg.obj.toString();
 
-                    if (toggleTrans)
-                        receiveText.setText(transText);
-                    else
-                        receiveText.setText(originText);
+                    receiveText.setText(transText);
+
+                    Log.e("trans", receiveAdapterStr);
+
+                    adapter.add(new AdapterContent.Builder(receiveAdapterStr.split("\\|")[0], R.id.chat_remote)
+                            .setTransText(transText)
+                            .setLang(receiveAdapterStr.split("\\|")[1])
+                            .build());
+                    adapter.notifyDataSetChanged();
 
                     break;
 
@@ -1136,55 +1193,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 채팅 내역
 
-    String text;
-
     void setListView() {
         recordList = findViewById(R.id.recordList_Call);
-        adapter = new CustomAdapter(lang.equals("ko-KR") ? "ko" : "en", this.getApplicationContext());
-
-        recordText_List.delete(0, 1);
-
-        recordText_List.append("Hello<local>안녕<remote>Nice to meet you<local>안녕하세요<remote>How are you<local>번역<remote>Thanks<local>반갑습니다<remote>");
-
-        int localIndex = recordText_List.indexOf("<local>");
-        int remoteIndex = recordText_List.indexOf("<remote>");
 
         recordList.setAdapter(adapter);
-
-        while (localIndex != -1 || remoteIndex != -1) {
-            if (((localIndex < remoteIndex) && localIndex != -1) || remoteIndex == -1) {
-                text = recordText_List.substring(0, localIndex);
-                recordText_List.delete(0, localIndex + "<local>".length());
-                adapter.add(text, 0);
-            } else if (remoteIndex < localIndex || localIndex == -1) {
-                text = recordText_List.substring(0, remoteIndex);
-                recordText_List.delete(0, remoteIndex + "<remote>".length());
-                adapter.add(text, 1);
-            }
-
-            localIndex = recordText_List.indexOf("<local>");
-            remoteIndex = recordText_List.indexOf("<remote>");
-        }
     }
-
-    public void sendRecord(String msg) {
-        recordText.append(msg).append("<local>");
-        recordText_List.append(msg).append("<local>");
-        updateHandler.sendEmptyMessage(0);
-    }
-
-    public void receiveRecord(String msg) {
-        recordText.append(msg).append("<remote>");
-        recordText_List.append(msg).append("<remote>");
-        updateHandler.sendEmptyMessage(0);
-    }
-
-    @SuppressLint("HandlerLeak")
-    Handler updateHandler = new Handler() {
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            recordList.setAdapter(adapter);
-        }
-    };
 }

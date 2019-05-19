@@ -85,6 +85,7 @@ public class IntroActivity extends AppCompatActivity {
             SharedPreferences prefs1 = getSharedPreferences("PrefSets", MODE_PRIVATE);
             SharedPreferences.Editor editor = prefs1.edit();
             editor.putString("lang", strLanguage);
+            editor.putBoolean("setbool", true);
             editor.apply();
 
             //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);

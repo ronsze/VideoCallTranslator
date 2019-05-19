@@ -1270,7 +1270,6 @@ public class PeerConnectionClient {
           if(dataChannel != null) {
             Message msg = msgHandler.obtainMessage();
             msg.obj = strData;
-            ((CallActivity)appContext).receiveRecord(strData);
             msgHandler.sendMessage(msg);
           }
           Log.d(TAG, "Got msg: " + strData + " over " + dc);
@@ -1367,8 +1366,5 @@ public class PeerConnectionClient {
     ByteBuffer buffer = ByteBuffer.wrap(msg.getBytes());
     assert dataChannel != null;
     dataChannel.send(new DataChannel.Buffer(buffer, false));
-
-
-    ((CallActivity)appContext).sendRecord(msg);
   }
 }

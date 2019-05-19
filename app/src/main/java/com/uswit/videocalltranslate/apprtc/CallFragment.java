@@ -84,20 +84,13 @@ public class CallFragment extends Fragment {
     toggleMuteButton.setOnClickListener(view -> {
       boolean enabled = callEvents.onToggleMic();
       toggleMuteButton.setAlpha(enabled ? 1.0f : 0.3f);
-    });
 
-    ImageButton bt = controlView.findViewById(R.id.button_speech);
-    bt.setOnClickListener(v -> {
-      if(tf) {
+      if(enabled) {
         Log.e("onClick", "스탑!");
         ((CallActivity)getActivity()).stopVoiceRecorder();
-        v.setBackgroundResource(R.drawable.ic_record_voice_none);
-        tf = false;
       } else {
         Log.e("onClick", "시작!");
         ((CallActivity)getActivity()).startVoiceRecorder();
-        v.setBackgroundResource(R.drawable.ic_record_voice);
-        tf = true;
       }
     });
 
@@ -136,6 +129,4 @@ public class CallFragment extends Fragment {
     super.onAttach(activity);
     callEvents = (OnCallEvents) activity;
   }
-
-  boolean tf = false;
 }

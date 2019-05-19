@@ -22,7 +22,7 @@
     <string name="btn_change">변경</string>
 
     <!-- 영상통화 -->
-    <string name="disconnect_call">통화종료</string>
+    <string name="disconnect_call">통화 종료</string>
 
     <string name="favorites">Favorites</string>
     <string name="no_favorites">No favorites</string>

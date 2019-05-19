@@ -4,20 +4,15 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.uswit.videocalltranslate.NaverTTSTask;
 import com.uswit.videocalltranslate.R;
-import com.uswit.videocalltranslate.Translate;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,24 +20,19 @@ import java.util.ArrayList;
 
 public class CustomAdapter extends BaseAdapter {
 
-    private String language;
-
     private ArrayList<AdapterContent> items = new ArrayList<>();
 
     private MediaPlayer mPlayer;
 
     private Context context;
 
-    private int prevpos;
-
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    CustomAdapter(String _lang, Context _context) {
-        language = _lang;
+    CustomAdapter(Context _context) {
         context = _context;
     }
 
-    public void add(String msg, int type) {
-        items.add(new AdapterContent(msg, type));
+    public void add(AdapterContent adapterContent) {
+        items.add(adapterContent.get());
     }
 
     @Override
@@ -69,13 +59,13 @@ public class CustomAdapter extends BaseAdapter {
         Button trans = null;
 
         switch (items.get(pos).type) {
-            case 0:
+            case R.id.chat_local:
                 LayoutInflater inflater_L = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater_L.inflate(R.layout.local_msg_box, parent, false);
                 msgBox = convertView.findViewById(R.id.localMsgBox);
                 trans = convertView.findViewById(R.id.localTransBtn);
                 break;
-            case 1:
+            case R.id.chat_remote:
                 LayoutInflater inflater_R = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 convertView = inflater_R.inflate(R.layout.remote_msg_box, parent, false);
                 msgBox = convertView.findViewById(R.id.remoteMsgBox);
@@ -104,14 +94,11 @@ public class CustomAdapter extends BaseAdapter {
         msgBox.setOnClickListener(v -> {
             if (mPlayer.isPlaying()) {
                 mPlayer.stop();
-                backgroundHandleMsg(0, prevpos);
-                prevpos = pos;
             } else {
-                prevpos = pos;
                 new Thread() {
                     public void run() {
                         try {
-                            NaverTTSTask mNaverTTSTask = new NaverTTSTask(items.get(pos).lang.equals("ko") ? 0 : 1);
+                            NaverTTSTask mNaverTTSTask = new NaverTTSTask(items.get(pos).lang.equals("ko-KR") ? 0 : 1);
                             mNaverTTSTask.setText(items.get(pos).msg);
                             mNaverTTSTask.execute();
 
@@ -125,14 +112,11 @@ public class CustomAdapter extends BaseAdapter {
                             mPlayer.prepare();
                             mPlayer.setVolume(1.0f, 1.0f);
                             mPlayer.start();
-                            backgroundHandleMsg(1, pos);
                         } catch (IOException e) {
                             e.printStackTrace();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-
-                        mPlayer.setOnCompletionListener(mp -> backgroundHandleMsg(0, pos));
                     }
                 }.start();
             }
@@ -154,100 +138,15 @@ public class CustomAdapter extends BaseAdapter {
                     items.get(pos).transOn = true;
                 }
 
-                if (items.get(pos).lang.equals("ko")) {
-                    items.get(pos).lang = "en";
+                if (items.get(pos).lang.equals("ko-KR")) {
+                    items.get(pos).lang = "en-US";
                 } else{
-                    items.get(pos).lang = "ko";
+                    items.get(pos).lang = "ko-KR";
                 }
             }
         });
         return convertView;
     }
 
-    private Handler backHandler = new Handler(Looper.getMainLooper()) {
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            int type = msg.arg1;
-            int pos = msg.arg2;
-        }
-    };
-
-    private void backgroundHandleMsg(int type, int pos) {
-        Message msg = backHandler.obtainMessage();
-        msg.arg1 = type;
-        msg.arg2 = pos;
-        backHandler.sendMessage(msg);
-    }
-
-    class AdapterContent {
-        String msg;
-        int type;
-
-        String originalText;
-        String transText;
-
-        String lang;
-
-        TextView msgBox;
-
-        boolean transOn = false;
-
-        AdapterContent(String _msg, int _type) {
-            msg = _msg;
-            type = _type;
-            lang = language;
-
-            originalText = msg;
-
-            String src;
-            String target;
-            if (language.equals("ko")) {
-                if(type == 1){
-                    lang = "en";
-                }
-                src = "en";
-                target = "kr";
-            } else {
-                if(type == 1){
-                    lang = "ko";
-                }
-                src = "kr";
-                target = "en";
-            }
-
-            Translate translate;
-
-            if(type == 0) {
-                translate = new Translate(handler, src, target);
-            }else{
-                translate = new Translate(handler, target, src);
-            }
-
-            translate.run(msg);
-        }
-
-        Handler handler = new Handler(Looper.getMainLooper()) {
-            public void handleMessage(Message message) {
-                super.handleMessage(message);
-
-                switch (message.what) {
-                    case R.id.translateCode:
-                        Toast.makeText(context, "responseCode >> " + message.arg1, Toast.LENGTH_SHORT).show();
-
-                        break;
-
-                    case R.id.translateResult:
-                        transText = message.obj.toString();
-                        break;
-
-                    case R.id.translateError:
-                        Toast.makeText(context, message.obj.toString(), Toast.LENGTH_SHORT).show();
-
-                        break;
-
-                    default:
-                }
-            }
-        };
-    }
 }
+

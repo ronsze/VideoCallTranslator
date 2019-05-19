@@ -14,24 +14,20 @@ import java.net.URLEncoder;
 public class Translate {
     private final String apikey = "09d9f87fedec235485dc389a14ed4f34";
 
-    private String src;
-    private String target;
-
     private Handler handler;
 
-    public Translate(Handler handler, String src, String target) {
+    public Translate(Handler handler) {
         this.handler = handler;
-
-        this.src = src;
-        this.target = target;
     }
 
-    void setParams(String src, String target) {
-        this.src = src;
-        this.target = target;
-    }
+    public void run(final String str, final String _src) {
+        Log.e("run", _src);
 
-    public void run(final String str) {
+        String src = _src.equals("ko-KR") ? "kr" : "en";
+        String target = _src.equals("ko-KR") ? "en" : "kr";
+        Log.e("run", src);
+        Log.e("run", target);
+
         new Thread() {
             public void run() {
                 HttpURLConnection conn = null;
