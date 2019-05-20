@@ -31,8 +31,9 @@ public class CustomAdapter extends BaseAdapter {
         context = _context;
     }
 
-    public void add(AdapterContent adapterContent) {
-        items.add(adapterContent.get());
+    public String add(AdapterContent adapterContent) {
+        items.add(adapterContent);
+        return adapterContent.transText;
     }
 
     @Override

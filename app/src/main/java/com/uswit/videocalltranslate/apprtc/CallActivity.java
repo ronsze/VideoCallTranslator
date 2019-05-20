@@ -24,7 +24,6 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -56,7 +55,6 @@ import java.util.concurrent.Executors;
 
 import com.uswit.videocalltranslate.R;
 import com.uswit.videocalltranslate.SpeechService;
-import com.uswit.videocalltranslate.Translate;
 import com.uswit.videocalltranslate.VoiceRecorder;
 import com.uswit.videocalltranslate.apprtc.AppRTCAudioManager.AudioDevice;
 import com.uswit.videocalltranslate.apprtc.AppRTCClient.RoomConnectionParameters;
@@ -91,7 +89,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         PeerConnectionClient.PeerConnectionEvents,
         CallFragment.OnCallEvents {
 
-    int testType = 0;
     private static final String TAG = "CallRTCClient";
 
     public static final String EXTRA_ROOMID = "com.uswit.videocalltransalte.apprtc.ROOMID";
@@ -214,22 +211,16 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     private String roomId;
     private boolean isSaved = false;
 
-    Translate translate;
-
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private SpeechService mSpeechService;
     private TextView receiveText;
     private TextView sendText;
-    private String transText;
 
     private String lang;
-    private String receiveAdapterStr;
 
     private VoiceRecorder mVoiceRecorder;
 
     private StringBuffer recordText = new StringBuffer();
-
-    private ListView recordList;
 
     CustomAdapter adapter;
 
@@ -478,8 +469,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
         adapter = new CustomAdapter(context);
         setListView();
-
-        translate = new Translate(handler);
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer);
         drawerLayout.setScrimColor(getResources().getColor(android.R.color.transparent));
@@ -1053,9 +1042,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             connected = true;
             callConnected();
 
-            assert peerConnectionClient != null;
-            peerConnectionClient.sendMsg(lang);
-
             startVoiceRecorder();
         });
     }
@@ -1111,22 +1097,16 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     Log.e("onSpeech", "인식");
                     if (isFinal) {
                         mVoiceRecorder.dismiss();
-                        String sendText = text + "|" + lang;
-                        peerConnectionClient.sendMsg(sendText);
+                        peerConnectionClient.sendMsg(text + "|" + lang);
 
                         runOnUiThread(() ->{
-                            adapter.add(new AdapterContent.Builder(text, R.id.chat_local)
-                                    .setLang(lang)
-                                    .build());
+                            String transText = adapter.add(new AdapterContent(text, R.id.chat_local, lang));
                             adapter.notifyDataSetChanged();
-                            peerConnectionClient.sendMsg("-end-");
-                            recordText.append(sendText).append("<local>");
+                            recordText.append(text).append("|").append(transText).append("<local>");
                         });
                     }
                     if (sendText != null && !TextUtils.isEmpty(text)) {
-                        runOnUiThread(() -> {
-                            sendText.setText(text);
-                        });
+                        runOnUiThread(() -> sendText.setText(text));
                     }
                 }
             };
@@ -1136,65 +1116,30 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
 
-            if(msg.obj.equals("-end-")) {
-                runOnUiThread(() -> recordText.append(receiveAdapterStr).append("<remote>"));
-            }else if(!msg.obj.equals("ko-KR") && !msg.obj.equals("en-US")) {
+            if(!msg.obj.toString().isEmpty()) {
                 if (adapter == null) {
                     adapter = new CustomAdapter(context);
                     setListView();
                 } else {
-                    receiveAdapterStr = msg.obj.toString();
-                    Log.e("receive", receiveAdapterStr);
-                    translate.run(receiveAdapterStr.split("\\|")[0], receiveAdapterStr.split("\\|")[1]);
+                    String receiveStr = msg.obj.toString().split("\\|")[0];
+                    String receiveLang = msg.obj.toString().split("\\|")[1];
+
+                    String transText = adapter.add(new AdapterContent(receiveStr, R.id.chat_remote, receiveLang));
+                    adapter.notifyDataSetChanged();
+
+                    receiveText.setText(transText);
+
+                    recordText.append(receiveStr).append("|").append(transText).append("<remote>");
                 }
             }
         }
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    // 번역 메시지 핸들러
-
-    @SuppressLint("HandlerLeak")
-    Handler handler = new Handler() {
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-
-            switch (msg.what) {
-                case R.id.translateCode:
-                    Toast.makeText(CallActivity.this, "responseCode >> " + msg.arg1, Toast.LENGTH_SHORT).show();
-
-                    break;
-
-                case R.id.translateResult:
-                    transText = msg.obj.toString();
-
-                    receiveText.setText(transText);
-
-                    Log.e("trans", receiveAdapterStr);
-
-                    adapter.add(new AdapterContent.Builder(receiveAdapterStr.split("\\|")[0], R.id.chat_remote)
-                            .setTransText(transText)
-                            .setLang(receiveAdapterStr.split("\\|")[1])
-                            .build());
-                    adapter.notifyDataSetChanged();
-
-                    break;
-
-                case R.id.translateError:
-                    Toast.makeText(CallActivity.this, msg.obj.toString(), Toast.LENGTH_SHORT).show();
-
-                    break;
-
-                default:
-            }
-        }
-    };
-
-    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 채팅 내역
 
     void setListView() {
-        recordList = findViewById(R.id.recordList_Call);
+        ListView recordList = findViewById(R.id.recordList_Call);
 
         recordList.setAdapter(adapter);
     }

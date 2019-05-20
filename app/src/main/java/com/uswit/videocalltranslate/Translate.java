@@ -1,7 +1,6 @@
 package com.uswit.videocalltranslate;
 
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -11,94 +10,84 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
-public class Translate {
+public class Translate extends Thread {
     private final String apikey = "09d9f87fedec235485dc389a14ed4f34";
 
-    private Handler handler;
+    private ThreadReceive mThreadReceive;
 
-    public Translate(Handler handler) {
-        this.handler = handler;
+    private String str;
+    private String src;
+    private String target;
+
+    public interface ThreadReceive {
+        void onTranslateResult(String result);
+        void onTranslateError(String result);
+    };
+
+    public Translate(ThreadReceive threadReceive, final String str, final String _src) {
+        mThreadReceive = threadReceive;
+        this.str = str;
+        this.src = _src.equals("ko-KR") ? "kr" : "en";
+        this.target = _src.equals("ko-KR") ? "en" : "kr";
     }
 
-    public void run(final String str, final String _src) {
-        Log.e("run", _src);
+    @Override
+    public void run() {
+        HttpURLConnection conn = null;
 
-        String src = _src.equals("ko-KR") ? "kr" : "en";
-        String target = _src.equals("ko-KR") ? "en" : "kr";
-        Log.e("run", src);
-        Log.e("run", target);
+        try {
+            String text = URLEncoder.encode(str, "UTF-8");
 
-        new Thread() {
-            public void run() {
-                HttpURLConnection conn = null;
+            String postParams = "src_lang=" + src + "&target_lang=" + target + "&query=" + text;
+            String apiURL = "https://kapi.kakao.com/v1/translation/translate?";
+            URL url = new URL(apiURL);
 
-                try {
-                    String text = URLEncoder.encode(str, "UTF-8");
+            Log.e("Translate", apiURL + postParams);
 
-                    String postParams = "src_lang=" + src + "&target_lang=" + target + "&query=" + text;
-                    String apiURL = "https://kapi.kakao.com/v1/translation/translate?";
-                    URL url = new URL(apiURL);
+            conn = (HttpURLConnection) url.openConnection();
 
-                    Log.e("Translate", apiURL + postParams);
+            String basicAuth = "KakaoAK " + apikey;
 
-                    conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestProperty("Authorization", basicAuth);
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("charset", "utf-8");
+            conn.setUseCaches(false);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
 
-                    String basicAuth = "KakaoAK " + apikey;
+            DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
+            wr.writeBytes(postParams);
+            wr.flush();
+            wr.close();
 
-                    conn.setRequestProperty("Authorization", basicAuth);
-                    conn.setRequestMethod("GET");
-                    conn.setRequestProperty("charset", "utf-8");
-                    conn.setUseCaches(false);
-                    conn.setDoInput(true);
-                    conn.setDoOutput(true);
+            int responseCode = conn.getResponseCode();
 
-                    DataOutputStream wr = new DataOutputStream(conn.getOutputStream());
-                    wr.writeBytes(postParams);
-                    wr.flush();
-                    wr.close();
+            BufferedReader br;
 
-                    int responseCode = conn.getResponseCode();
+            if(responseCode==200) {
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
 
-                    Message msg = handler.obtainMessage();
+                String inputLine;
+                StringBuilder res = new StringBuilder();
 
-                    BufferedReader br;
-
-                    if(responseCode==200) {
-                        br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-
-                        String inputLine;
-                        StringBuilder res = new StringBuilder();
-
-                        while((inputLine = br.readLine()) != null) {
-                            res.append(inputLine);
-                        }
-
-                        br.close();
-
-                        msg.what = R.id.translateResult;
-                        msg.obj = res.toString().substring(22, res.length() - 4);
-
-                        handler.sendMessage(msg);
-                    }
-                    else {
-                        msg.what = R.id.translateCode;
-                        msg.arg1 = responseCode;
-
-                        handler.sendMessage(msg);
-                    }
-
-                } catch (Exception e) {
-                    Message msg = handler.obtainMessage();
-
-                    msg.what = R.id.translateError;
-                    msg.obj = e.toString();
-
-                } finally {
-                    if (conn != null) {
-                        conn.disconnect();
-                    }
+                while((inputLine = br.readLine()) != null) {
+                    res.append(inputLine);
                 }
+
+                br.close();
+
+                mThreadReceive.onTranslateResult(res.toString().substring(22, res.length() - 4));
             }
-        }.start();
+            else {
+                mThreadReceive.onTranslateError("responseCode: " + responseCode);
+            }
+
+        } catch (Exception e) {
+            mThreadReceive.onTranslateError(e.toString());
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
+        }
     }
 }
