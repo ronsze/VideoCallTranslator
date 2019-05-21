@@ -97,6 +97,8 @@ dependencies {
     implementation('com.google.auth:google-auth-library-oauth2-http:0.15.0') {
         exclude module: 'httpclient'
     }
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
 }
 
 configurations {

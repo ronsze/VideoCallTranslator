@@ -36,16 +36,35 @@
             android:background="@android:drawable/sym_action_call" />
     </androidx.appcompat.widget.LinearLayoutCompat>
 
-    <Button
-        android:id="@+id/btn_langset"
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
-        android:text="@string/select_lang"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayoutCompat" />
+        app:layout_constraintTop_toBottomOf="@+id/linearLayoutCompat">
+
+        <Button
+            android:id="@+id/btn_langset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="32dp"
+            android:text="@string/select_lang"
+            tools:ignore="ButtonStyle"
+            tools:layout_editor_absoluteX="-3dp"
+            tools:layout_editor_absoluteY="233dp" />
+
+        <Button
+            android:id="@+id/btn_chatRecent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="채팅 기록"
+            tools:layout_editor_absoluteX="315dp"
+            tools:layout_editor_absoluteY="121dp"
+            tools:ignore="ButtonStyle" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,6 +23,7 @@
         <activity android:name=".InputNameActivity" />
         <activity android:name=".MainActivity" />
         <activity android:name=".apprtc.CallActivity" />
+        <activity android:name=".SelectRecentActivity" />
 
         <service android:name=".SpeechService"/>
     </application>

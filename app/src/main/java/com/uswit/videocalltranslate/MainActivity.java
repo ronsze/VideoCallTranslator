@@ -107,6 +107,11 @@ public class MainActivity extends Activity {
 
             finish();
         });
+
+        Button chatRecent = findViewById(R.id.btn_chatRecent);
+        chatRecent.setOnClickListener(view -> {
+            startActivity(new Intent(this, SelectRecentActivity.class));
+        });
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ

@@ -17,6 +17,7 @@ import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -30,10 +31,12 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -53,6 +56,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.uswit.videocalltranslate.MainActivity;
 import com.uswit.videocalltranslate.R;
 import com.uswit.videocalltranslate.SpeechService;
 import com.uswit.videocalltranslate.VoiceRecorder;
@@ -216,6 +220,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     private TextView receiveText;
     private TextView sendText;
 
+    String connTime;
+    String value;
     private String lang;
 
     private VoiceRecorder mVoiceRecorder;
@@ -746,57 +752,106 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         }
 
         if(!isSaved) {
-            @SuppressLint("SimpleDateFormat") String getTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            AlertDialog.Builder ad = new AlertDialog.Builder(CallActivity.this);
 
-            File storeDir = new File(context.getExternalFilesDir(null), "chat");
+            ad.setTitle("Chatting recent save...");       // 제목 설정
+            ad.setMessage("Enter recent name");   // 내용 설정
 
-            if (!storeDir.exists()) {
-                if (!storeDir.mkdirs()) {
-                    Log.e("chat", "failed to create directory");
-                    return;
+// EditText 삽입하기
+            final EditText et = new EditText(CallActivity.this);
+            ad.setView(et);
+
+// 확인 버튼 설정
+            ad.setPositiveButton("OK", (dialog, which) -> {
+                Log.v(TAG, "Yes Btn Click");
+
+                value = et.getText().toString();
+
+                saveRecent();
+
+                finish();
+                dialog.dismiss();     //닫기
+            });
+
+// 취소 버튼 설정
+            ad.setNegativeButton("No", (dialog, which) -> {
+                Log.v(TAG, "No Btn Click");
+
+                saveRecent();
+
+                finish();
+                dialog.dismiss();     //닫기
+            });
+
+            ad.setOnKeyListener((dialog, keyCode, event) -> {
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+
+                    saveRecent();
+
+                    finish();
+                    dialog.dismiss();
+                    return true;
                 }
-            }
+                return false;
+            });
 
-            File roomDir = new File(storeDir, roomId);
+// 창 띄우기
+            ad.show();
+        }
+    }
 
-            if (!roomDir.exists()) {
-                if (!roomDir.mkdirs()) {
-                    Log.e("room", "failed to create directory");
-                    return;
-                }
-            }
+    private void saveRecent() {
+        File storeDir = new File(context.getExternalFilesDir(null), "chat");
 
-            File file = new File(roomDir, getTime);
-
-            Log.e("file", file.getPath());
-            Log.e("recordText", recordText.toString());
-
-            FileWriter fw = null;
-
-            try {
-                // open file.
-                fw = new FileWriter(file);
-
-                // write file.
-                fw.write(recordText.toString());
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            // close file.
-            if (fw != null) {
-                // catch Exception here or throw.
-                try {
-                    fw.close();
-                    isSaved = true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        if (!storeDir.exists()) {
+            if (!storeDir.mkdirs()) {
+                Log.e("chat", "failed to create directory");
+                return;
             }
         }
 
-        finish();
+        File roomDir = new File(storeDir, roomId);
+
+        if (!roomDir.exists()) {
+            if (!roomDir.mkdirs()) {
+                Log.e("room", "failed to create directory");
+                return;
+            }
+        }
+        String saveName;
+        if(value == null)
+            saveName = connTime;
+        else
+            saveName = connTime + "_" + value;
+
+        File file = new File(roomDir, saveName);
+
+        Log.e("file", file.getPath());
+        Log.e("recordText", recordText.toString());
+
+        FileWriter fw = null;
+
+        try {
+            // open file.
+            fw = new FileWriter(file);
+
+            // write file.
+            fw.write(recordText.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // close file.
+        if (fw != null) {
+            // catch Exception here or throw.
+            try {
+                fw.close();
+                isSaved = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void disconnectWithErrorMessage(final String errorMessage) {
@@ -1034,6 +1089,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         runOnUiThread(() -> logAndToast("ICE disconnected"));
     }
 
+    @SuppressLint("SimpleDateFormat")
     @Override
     public void onConnected() {
         final long delta = System.currentTimeMillis() - callStartedTimeMs;
@@ -1042,6 +1098,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             connected = true;
             callConnected();
 
+            connTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             startVoiceRecorder();
         });
     }
