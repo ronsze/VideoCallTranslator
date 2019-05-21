@@ -220,8 +220,9 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     private TextView receiveText;
     private TextView sendText;
 
-    String connTime;
-    String value;
+    private boolean isConnected = false;
+    private String connTime;
+    private String value;
     private String lang;
 
     private VoiceRecorder mVoiceRecorder;
@@ -751,7 +752,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             setResult(RESULT_CANCELED);
         }
 
-        if(!isSaved) {
+        if(!isSaved && isConnected) {
             AlertDialog.Builder ad = new AlertDialog.Builder(CallActivity.this);
 
             ad.setTitle("Chatting recent save...");       // 제목 설정
@@ -797,6 +798,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
 // 창 띄우기
             ad.show();
+        } else {
+            finish();
         }
     }
 
@@ -1098,6 +1101,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             connected = true;
             callConnected();
 
+            isConnected = true;
             connTime = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
             startVoiceRecorder();
         });
