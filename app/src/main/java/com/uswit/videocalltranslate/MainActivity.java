@@ -3,6 +3,7 @@ package com.uswit.videocalltranslate;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -10,12 +11,17 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -26,6 +32,7 @@ import java.util.Random;
 
 public class MainActivity extends Activity {
 
+    public static Context context;
     private static final String TAG = "ConnectActivity";
 
     String lang;
@@ -46,6 +53,10 @@ public class MainActivity extends Activity {
     private String keyprefRoomServerUrl;
     private String keyprefRoom;
 
+    private FaivoritAdapter faivoritAdapter;
+    private ListView faivoritList;
+    private TextView faivorittext;
+    private Button faivoritBtn;
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
     @Override
@@ -54,6 +65,8 @@ public class MainActivity extends Activity {
 
         getWindow().addFlags(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        context = this;
 
         setContentView(R.layout.activity_main);
 
@@ -112,6 +125,52 @@ public class MainActivity extends Activity {
         chatRecent.setOnClickListener(view -> {
             startActivity(new Intent(this, SelectRecentActivity.class));
         });
+
+        faivorittext = (TextView)findViewById(R.id.faivorit_text);
+        faivoritAdapter = new FaivoritAdapter(3, context);
+        faivoritList = (ListView)findViewById(R.id.faivorit_List);
+        faivoritBtn = (Button)findViewById(R.id.favorites_btn);
+
+        faivoritList.setAdapter(faivoritAdapter);
+
+        faivorittext.setOnClickListener(new View.OnClickListener() {            //즐겨찾기 펼치기, 접기
+            @Override
+            public void onClick(View v) {
+                if(faivoritList.getVisibility() == View.VISIBLE){
+                    faivoritList.setVisibility(View.GONE);
+                }else{
+                    faivoritList.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        faivoritBtn.setOnClickListener(new View.OnClickListener() {             //즐겨찾기 추가버튼
+            @Override
+            public void onClick(View v) {
+                EditText roomEditText = findViewById(R.id.room_edittext);
+                if(roomEditText.getText().length() > 0 && roomEditText.getText() != null) {
+                    for (int i = 0; i < faivoritAdapter.getItemCnt(); i++) {
+                        if (roomEditText.getText().toString().equals(faivoritAdapter.getName(i))) {
+                            Toast.makeText(context, "이미 즐겨찾기에 등록되어 있습니다.", Toast.LENGTH_SHORT).show();
+                            break;
+                        } else {
+                            faivoritAdapter.add(roomEditText.getText().toString());
+                            faivoritAdapter.notifyDataSetChanged();
+                            break;
+                        }
+                    }
+                    if (faivoritAdapter.getItemCnt() == 0) {
+                        faivoritAdapter.add(roomEditText.getText().toString());
+                        faivoritAdapter.notifyDataSetChanged();
+                    }
+                    Toast.makeText(context, roomEditText.getText(), Toast.LENGTH_SHORT).show();
+                    roomEditText.setText("");
+                }else{
+
+                }
+            }
+        });
+
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -196,6 +255,16 @@ public class MainActivity extends Activity {
     private void connectToRoom(String roomId, boolean commandLineRun, boolean loopback,
                                boolean useValuesFromIntent, int runTimeMs) {
         MainActivity.commandLineRun = commandLineRun;
+
+        if(faivoritAdapter != null){
+            for(int i = 0; i < faivoritAdapter.getItemCnt(); i++){
+                if(roomId.equals(faivoritAdapter.getName(i))){
+                    faivoritAdapter.addCallCnt(i);
+                    faivoritAdapter.notifyDataSetChanged();
+                    break;
+                }
+            }
+        }
 
         // roomId is random for loopback.
         if (loopback) {
@@ -472,4 +541,13 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    public void adapterCall(String roomName){
+        connectToRoom(roomName, false, false, false, 0);
+    }
+
+    public void updateAdapter(){
+        if(faivoritAdapter != null) {
+            faivoritAdapter.notifyDataSetChanged();
+        }
+    }
 }
