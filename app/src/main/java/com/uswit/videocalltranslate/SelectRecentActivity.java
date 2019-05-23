@@ -2,9 +2,12 @@ package com.uswit.videocalltranslate;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
@@ -12,16 +15,20 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.uswit.videocalltranslate.apprtc.AdapterContent;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
+import java.util.Scanner;
 
 public class SelectRecentActivity extends AppCompatActivity {
 
@@ -38,10 +45,15 @@ public class SelectRecentActivity extends AppCompatActivity {
 
         @Override
         public void onAnimationEnd(Animation animation) {
-            if(isSub)
+            if(isSub) {
                 barTitle.setText(selectedRoomName);
-            else
+
+                actionBar.setDisplayHomeAsUpEnabled(true);
+            } else {
                 barTitle.setText("Select Room Name");
+
+                actionBar.setDisplayHomeAsUpEnabled(false);
+            }
         }
 
         @Override
@@ -50,6 +62,9 @@ public class SelectRecentActivity extends AppCompatActivity {
         }
     };
 
+    private ActionBar actionBar;
+    Context context;
+
     private LinearLayout roomLayout;
     private LinearLayout subLayout;
     private RecyclerView recyclerSubView;
@@ -57,16 +72,27 @@ public class SelectRecentActivity extends AppCompatActivity {
 
     private TextView barTitle;
     private String selectedRoomName;
+    private String selectedFileName;
+    ArrayList<String> subfName;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_recent);
 
-        Context context = this.getApplicationContext();
+        context = this.getApplicationContext();
 
         barTitle = findViewById(R.id.barTitle);
         barTitle.setText("Select Room Name");
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(false);
 
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         recyclerSubView = findViewById(R.id.recycler_view_sub);
@@ -91,6 +117,8 @@ public class SelectRecentActivity extends AppCompatActivity {
         RecyclerView.LayoutManager subLayoutManager = new LinearLayoutManager(this);
         recyclerSubView.setLayoutManager(subLayoutManager);
 
+        RecyclerView.LayoutManager viewLayoutManager = new LinearLayoutManager(this);
+
         ArrayList<String> fName = new ArrayList<>();
         File files = new File(this.getApplicationContext().getExternalFilesDir(null), "chat");
 
@@ -105,9 +133,12 @@ public class SelectRecentActivity extends AppCompatActivity {
             RecyclerView.Adapter adapter = new RecentAdapter(textSet, false);
             recyclerView.setAdapter(adapter);
         } else {
-            recyclerView.setVisibility(View.GONE);
+            roomLayout.setVisibility(View.GONE);
+            TextView norecent = findViewById(R.id.txt_norecent);
+            norecent.setVisibility(View.VISIBLE);
         }
 
+        subfName = new ArrayList<>();
         String[] finalTextSet = textSet;
         recyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), recyclerView, new RecyclerTouchListener.ClickListener() {
             @SuppressLint("SimpleDateFormat")
@@ -115,7 +146,7 @@ public class SelectRecentActivity extends AppCompatActivity {
             public void onClick(View view, int position) {
                 if(!isSub) {
                     if(finalTextSet != null) {
-                        ArrayList<String> subfName = new ArrayList<>();
+                        subfName.clear();
                         ArrayList<String> data = new ArrayList<>();
                         selectedRoomName = finalTextSet[position];
                         File subFiles = new File(files, selectedRoomName);
@@ -136,12 +167,16 @@ public class SelectRecentActivity extends AppCompatActivity {
                                 return 0;
                             });
 
-                            for(String file : subfName) {
+                            ArrayList<String> temp = new ArrayList<>(subfName);
+                            int index = 0;
+                            for(String file : temp) {
                                 String date = file.substring(0, 8);
                                 try {
                                     if(!date.equals(prevDate)) {
                                         data.add('T' + new SimpleDateFormat("yyyy.MM.dd.").format(new SimpleDateFormat("yyyyMMdd").parse(date)));
                                         prevDate = date;
+                                        subfName.add(index, "date");
+                                        index++;
                                     }
                                     String name;
                                     if (file.length() > 15) name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15))) + "_" + file.substring(16);
@@ -150,6 +185,7 @@ public class SelectRecentActivity extends AppCompatActivity {
                                 } catch (ParseException e) {
                                     Log.e("SelectRecentActivity", e.toString());
                                 }
+                                index++;
                             }
 
                             textSet = data.toArray(new String[data.size()]);
@@ -179,9 +215,68 @@ public class SelectRecentActivity extends AppCompatActivity {
         }));
 
         recyclerSubView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), recyclerSubView, new RecyclerTouchListener.ClickListener() {
+            @SuppressLint("SimpleDateFormat")
             @Override
             public void onClick(View view, int position) {
+                if(!subfName.get(position).equals("date")) {
+                    selectedFileName = subfName.get(position);
 
+                    StringBuilder data = new StringBuilder();
+
+                    File file = new File(files, selectedRoomName + '/' + selectedFileName);
+                    Scanner scan = null;
+                    try {
+                        scan = new Scanner(file);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    assert scan != null;
+                    while(scan.hasNextLine()){
+                        data.append(scan.nextLine());
+                    }
+
+                    ArrayList<AdapterContent> items = new ArrayList<>();
+
+                    int localIndex = data.indexOf("<local>");
+                    int remoteIndex = data.indexOf("<remote>");
+
+                    while (localIndex != -1 || remoteIndex != -1) {
+                        if (((localIndex < remoteIndex) && localIndex != -1) || remoteIndex == -1) {
+                            String str = data.substring(0, localIndex);
+                            data.delete(0, localIndex + "<local>".length());
+                            items.add(new AdapterContent(str.split("\\|")[0], str.split("\\|")[2], R.id.chat_local, str.split("\\|")[1]));
+                        } else if (remoteIndex < localIndex || localIndex == -1) {
+                            String str = data.substring(0, remoteIndex);
+                            data.delete(0, remoteIndex + "<remote>".length());
+                            items.add(new AdapterContent(str.split("\\|")[0], str.split("\\|")[2], R.id.chat_remote, str.split("\\|")[1]));
+                        }
+
+                        localIndex = data.indexOf("<local>");
+                        remoteIndex = data.indexOf("<remote>");
+                    }
+
+                    Intent intent = new Intent(context, ChatActivity.class);
+
+                    String recentName;
+                    if(selectedFileName.length() > 15)
+                        recentName = selectedFileName.substring(16);
+                    else
+                        recentName = "no_name";
+
+                    String date = "";
+                    try {
+                        date = new SimpleDateFormat("yyyy.MM.dd. HH:mm:ss").format(new SimpleDateFormat("yyyyMMdd_HHmmss").parse(selectedFileName.substring(0, 15)));
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+
+                    intent.putExtra("recentName", recentName);
+                    intent.putExtra("roomName", selectedRoomName);
+                    intent.putExtra("date", date);
+                    intent.putExtra("items", items);
+
+                    context.startActivity(intent);
+                }
             }
 
             @Override
@@ -201,5 +296,30 @@ public class SelectRecentActivity extends AppCompatActivity {
 
             isSub = false;
         } else super.onBackPressed();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.recent_menu, menu);
+
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+
+            case R.id.action_close:
+                finish();
+                return true;
+
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

@@ -7,9 +7,11 @@ import android.os.Environment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.uswit.videocalltranslate.NaverTTSTask;
 import com.uswit.videocalltranslate.R;
@@ -18,17 +20,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class CustomAdapter extends BaseAdapter {
+public class CustomAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private ArrayList<AdapterContent> items = new ArrayList<>();
-
-    private MediaPlayer mPlayer;
+    private ArrayList<AdapterContent> items;
 
     private Context context;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    CustomAdapter(Context _context) {
-        context = _context;
+    public CustomAdapter(Context context) {
+        this.context = context;
+        this.items = new ArrayList<>();
+    }
+
+    public CustomAdapter(Context context, ArrayList<AdapterContent> items) {
+        this.context = context;
+        this.items = items;
     }
 
     public String add(AdapterContent adapterContent) {
@@ -36,118 +42,147 @@ public class CustomAdapter extends BaseAdapter {
         return adapterContent.transText;
     }
 
+    @NonNull
     @Override
-    public int getCount() {
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if(viewType == R.id.chat_local)
+            return new LocalViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.local_msg_box, parent, false), context);
+        else {
+            return new RemoteViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.remote_msg_box, parent, false), context);
+        }
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        if(holder instanceof LocalViewHolder) {
+            ((LocalViewHolder)holder).onBind(items.get(position));
+        } else {
+            ((RemoteViewHolder)holder).onBind(items.get(position));
+        }
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return items.get(position).type;
+    }
+
+    @Override
+    public int getItemCount() {
         return items.size();
     }
 
-    @Override
-    public Object getItem(int position) {
-        return items.get(position);
-    }
+    public static class LocalViewHolder extends MyViewHolder {
+        TextView msgBox;
+        Button trans;
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
+        LocalViewHolder(View view, Context context) {
+            super(view, context);
 
-    //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        final int pos = position;
+            msgBox = view.findViewById(R.id.localMsgBox);
+            trans = view.findViewById(R.id.localTransBtn);
 
-        TextView msgBox = null;
-        Button trans = null;
-
-        switch (items.get(pos).type) {
-            case R.id.chat_local:
-                LayoutInflater inflater_L = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater_L.inflate(R.layout.local_msg_box, parent, false);
-                msgBox = convertView.findViewById(R.id.localMsgBox);
-                trans = convertView.findViewById(R.id.localTransBtn);
-                break;
-            case R.id.chat_remote:
-                LayoutInflater inflater_R = (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                convertView = inflater_R.inflate(R.layout.remote_msg_box, parent, false);
-                msgBox = convertView.findViewById(R.id.remoteMsgBox);
-                trans = convertView.findViewById(R.id.remoteTransBtn);
-                break;
         }
 
-        items.get(pos).msgBox = msgBox;
+        void onBind(AdapterContent item) {
+            item.msgBox = msgBox;
+            super.onBind(item, msgBox, trans);
+        }
+    }
 
-        assert msgBox != null;
-        msgBox.setText(items.get(pos).msg);
+    public static class RemoteViewHolder extends MyViewHolder {
+        TextView msgBox;
+        Button trans;
 
-        mPlayer = new MediaPlayer();
+        RemoteViewHolder(View view, Context context) {
+            super(view, context);
 
-        try {
-            mPlayer.setDataSource(Environment.getExternalStorageDirectory() + File.separator + "voice.mp3");
-        } catch (IOException e) {
-            e.printStackTrace();
+            msgBox = view.findViewById(R.id.remoteMsgBox);
+            trans = view.findViewById(R.id.remoteTransBtn);
         }
 
-        AudioManager audio;
-        audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-        int maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-        audio.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume/2, 0);
+        void onBind(AdapterContent item) {
+            item.msgBox = msgBox;
+            super.onBind(item, msgBox, trans);
+        }
+    }
 
-        msgBox.setOnClickListener(v -> {
-            if (mPlayer.isPlaying()) {
-                mPlayer.stop();
-            } else {
-                new Thread() {
-                    public void run() {
-                        try {
-                            NaverTTSTask mNaverTTSTask = new NaverTTSTask(items.get(pos).lang.equals("ko-KR") ? 0 : 1);
-                            mNaverTTSTask.setText(items.get(pos).msg);
-                            mNaverTTSTask.execute();
+    static class MyViewHolder extends RecyclerView.ViewHolder {
 
-                            Thread.sleep(200);
-                            if(mPlayer != null){
-                                mPlayer.release();
-                                mPlayer = null;
+        private MediaPlayer mPlayer;
+
+        MyViewHolder(View view, Context context) {
+            super(view);
+
+            mPlayer = new MediaPlayer();
+
+            try {
+                mPlayer.setDataSource(Environment.getExternalStorageDirectory() + File.separator + "voice.mp3");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            AudioManager audio;
+            audio = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            int maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+            audio.setStreamVolume(AudioManager.STREAM_MUSIC, maxVolume/2, 0);
+        }
+
+        void onBind(AdapterContent item, TextView msgBox, Button trans) {
+            msgBox.setText(item.originalText);
+
+
+            msgBox.setOnClickListener(v -> {
+                if (mPlayer.isPlaying()) {
+                    mPlayer.stop();
+                } else {
+                    new Thread() {
+                        public void run() {
+                            try {
+                                NaverTTSTask mNaverTTSTask = new NaverTTSTask(item.lang.equals("ko-KR") ? 0 : 1);
+                                if (item.transOn)
+                                    mNaverTTSTask.setText(item.transText);
+                                else
+                                    mNaverTTSTask.setText(item.originalText);
+                                mNaverTTSTask.execute();
+
+                                Thread.sleep(200);
+                                if (mPlayer != null) {
+                                    mPlayer.release();
+                                    mPlayer = null;
+                                }
+                                mPlayer = new MediaPlayer();
+                                mPlayer.setDataSource(Environment.getExternalStorageDirectory() + File.separator + "voice.mp3");
+                                mPlayer.prepare();
+                                mPlayer.setVolume(1.0f, 1.0f);
+                                mPlayer.start();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
                             }
-                            mPlayer = new MediaPlayer();
-                            mPlayer.setDataSource(Environment.getExternalStorageDirectory() + File.separator + "voice.mp3");
-                            mPlayer.prepare();
-                            mPlayer.setVolume(1.0f, 1.0f);
-                            mPlayer.start();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
                         }
+                    }.start();
+                }
+            });
+
+            trans.setOnClickListener(v -> {
+                if (!(mPlayer.isPlaying())) {
+                    if (item.transOn) {
+                        item.msgBox.setText(item.originalText);
+                        item.transOn = false;
+                    } else{
+                        item.msgBox.setText(item.transText);
+                        item.transOn = true;
                     }
-                }.start();
-            }
-        });
 
-
-
-        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
-        assert trans != null;
-        trans.setOnClickListener(v -> {
-            if (!(mPlayer.isPlaying())) {
-                if (items.get(pos).transOn) {
-                    items.get(pos).msg = items.get(pos).originalText;
-                    items.get(pos).msgBox.setText(items.get(pos).originalText);
-                    items.get(pos).transOn = false;
-                } else{
-                    items.get(pos).msg = items.get(pos).transText;
-                    items.get(pos).msgBox.setText(items.get(pos).transText);
-                    items.get(pos).transOn = true;
+                    if (item.lang.equals("ko-KR")) {
+                        item.lang = "en-US";
+                    } else{
+                        item.lang = "ko-KR";
+                    }
                 }
-
-                if (items.get(pos).lang.equals("ko-KR")) {
-                    items.get(pos).lang = "en-US";
-                } else{
-                    items.get(pos).lang = "ko-KR";
-                }
-            }
-        });
-        return convertView;
+            });
+        }
     }
-
 }
 

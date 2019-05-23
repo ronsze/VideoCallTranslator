@@ -17,7 +17,6 @@ import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -37,12 +36,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -56,7 +56,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import com.uswit.videocalltranslate.MainActivity;
 import com.uswit.videocalltranslate.R;
 import com.uswit.videocalltranslate.SpeechService;
 import com.uswit.videocalltranslate.VoiceRecorder;
@@ -1158,12 +1157,13 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     Log.e("onSpeech", "인식");
                     if (isFinal) {
                         mVoiceRecorder.dismiss();
-                        peerConnectionClient.sendMsg(text + "|" + lang);
+                        String send = text + "|" + lang;
+                        peerConnectionClient.sendMsg(send);
 
                         runOnUiThread(() ->{
                             String transText = adapter.add(new AdapterContent(text, R.id.chat_local, lang));
                             adapter.notifyDataSetChanged();
-                            recordText.append(text).append("|").append(transText).append("<local>");
+                            recordText.append(send).append("|").append(transText).append("<local>");
                         });
                     }
                     if (sendText != null && !TextUtils.isEmpty(text)) {
@@ -1190,7 +1190,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
                     receiveText.setText(transText);
 
-                    recordText.append(receiveStr).append("|").append(transText).append("<remote>");
+                    recordText.append(receiveStr).append("|").append(receiveLang).append("|").append(transText).append("<remote>");
                 }
             }
         }
@@ -1200,7 +1200,12 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     // 채팅 내역
 
     void setListView() {
-        ListView recordList = findViewById(R.id.recordList_Call);
+        RecyclerView recordList = findViewById(R.id.recordList_Call);
+
+        recordList.setHasFixedSize(true);
+
+        RecyclerView.LayoutManager viewLayoutManager = new LinearLayoutManager(this);
+        recordList.setLayoutManager(viewLayoutManager);
 
         recordList.setAdapter(adapter);
     }

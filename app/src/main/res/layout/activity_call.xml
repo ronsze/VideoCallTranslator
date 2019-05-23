@@ -109,17 +109,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:background="#50FFFFFF"
-        android:baselineAligned="false">
+        android:background="#50FFFFFF">
 
-        <ListView
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recordList_Call"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:divider="@null">
-
-        </ListView>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </LinearLayout>
 

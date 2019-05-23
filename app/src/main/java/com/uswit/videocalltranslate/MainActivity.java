@@ -126,10 +126,10 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, SelectRecentActivity.class));
         });
 
-        faivorittext = (TextView)findViewById(R.id.faivorit_text);
+        faivorittext = findViewById(R.id.faivorit_text);
         faivoritAdapter = new FaivoritAdapter(3, context);
         faivoritList = (ListView)findViewById(R.id.faivorit_List);
-        faivoritBtn = (Button)findViewById(R.id.favorites_btn);
+        faivoritBtn = findViewById(R.id.favorites_btn);
 
         faivoritList.setAdapter(faivoritAdapter);
 
