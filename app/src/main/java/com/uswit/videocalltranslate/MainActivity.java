@@ -6,10 +6,12 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -26,6 +28,8 @@ import android.widget.Toast;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.uswit.videocalltranslate.apprtc.CallActivity;
 
 import java.util.Random;
@@ -53,18 +57,29 @@ public class MainActivity extends Activity {
     private String keyprefRoomServerUrl;
     private String keyprefRoom;
 
-    private FaivoritAdapter faivoritAdapter;
-    private ListView faivoritList;
-    private TextView faivorittext;
-    private Button faivoritBtn;
+    private FRAdapter frAdapter;
+
+    private ListView frListView;
+    private int callRecordCnt;
+
+    private  Gson gson;
+
+    SharedPreferences.Editor editor;
+
+    private TextView close_open_text;
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         getWindow().addFlags(Window.FEATURE_NO_TITLE);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+
+        Settings.System.canWrite(this);
 
         context = this;
 
@@ -94,7 +109,10 @@ public class MainActivity extends Activity {
         ImageButton connectButton = findViewById(R.id.connect_button);
         connectButton.setOnClickListener(v -> {
             EditText roomEditText = findViewById(R.id.room_edittext);
-            connectToRoom(roomEditText.getText().toString(), false, false, false, 0);
+            if(roomEditText.getText().length() > 0 && roomEditText.getText() != null) {
+                connectToRoom(roomEditText.getText().toString(), false, false, false, 0);
+                roomEditText.setText("");
+            }
         });
 
         // If an implicit VIEW intent is launching the app, go directly to that URL.
@@ -112,7 +130,7 @@ public class MainActivity extends Activity {
 
         Button langSet = findViewById(R.id.btn_langset);
         langSet.setOnClickListener(view -> {
-            SharedPreferences.Editor editor = prefs.edit();
+            editor = prefs.edit();
             editor.putBoolean("setbool", false);
             editor.apply();
 
@@ -126,50 +144,37 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, SelectRecentActivity.class));
         });
 
-        faivorittext = findViewById(R.id.faivorit_text);
-        faivoritAdapter = new FaivoritAdapter(3, context);
-        faivoritList = (ListView)findViewById(R.id.faivorit_List);
-        faivoritBtn = findViewById(R.id.favorites_btn);
+        callRecordCnt = 10;
 
-        faivoritList.setAdapter(faivoritAdapter);
+        //String loadAdapter = prefs.getString("adapter", "");
 
-        faivorittext.setOnClickListener(new View.OnClickListener() {            //즐겨찾기 펼치기, 접기
+        frListView = (ListView)findViewById(R.id.faivorit_record_list);
+
+        /*
+        if(loadAdapter.equals("")) {
+            frAdapter = new FRAdapter(this, callRecordCnt);
+        }else{
+            frAdapter = gson.fromJson(loadAdapter, FRAdapter.class);
+        }
+        */
+
+        frAdapter = new FRAdapter(this, callRecordCnt);
+
+        frListView.setAdapter(frAdapter);
+
+        /*
+        close_open_text = (TextView)findViewById(R.id.open_close);
+        close_open_text.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(faivoritList.getVisibility() == View.VISIBLE){
-                    faivoritList.setVisibility(View.GONE);
+                if(frListView.getVisibility() == View.VISIBLE){
+                    frListView.setVisibility(View.GONE);
                 }else{
-                    faivoritList.setVisibility(View.VISIBLE);
+                    frListView.setVisibility(View.VISIBLE);
                 }
             }
         });
-
-        faivoritBtn.setOnClickListener(new View.OnClickListener() {             //즐겨찾기 추가버튼
-            @Override
-            public void onClick(View v) {
-                EditText roomEditText = findViewById(R.id.room_edittext);
-                if(roomEditText.getText().length() > 0 && roomEditText.getText() != null) {
-                    for (int i = 0; i < faivoritAdapter.getItemCnt(); i++) {
-                        if (roomEditText.getText().toString().equals(faivoritAdapter.getName(i))) {
-                            Toast.makeText(context, "이미 즐겨찾기에 등록되어 있습니다.", Toast.LENGTH_SHORT).show();
-                            break;
-                        } else {
-                            faivoritAdapter.add(roomEditText.getText().toString());
-                            faivoritAdapter.notifyDataSetChanged();
-                            break;
-                        }
-                    }
-                    if (faivoritAdapter.getItemCnt() == 0) {
-                        faivoritAdapter.add(roomEditText.getText().toString());
-                        faivoritAdapter.notifyDataSetChanged();
-                    }
-                    Toast.makeText(context, roomEditText.getText(), Toast.LENGTH_SHORT).show();
-                    roomEditText.setText("");
-                }else{
-
-                }
-            }
-        });
+        */
 
     }
 
@@ -256,13 +261,27 @@ public class MainActivity extends Activity {
                                boolean useValuesFromIntent, int runTimeMs) {
         MainActivity.commandLineRun = commandLineRun;
 
-        if(faivoritAdapter != null){
-            for(int i = 0; i < faivoritAdapter.getItemCnt(); i++){
-                if(roomId.equals(faivoritAdapter.getName(i))){
-                    faivoritAdapter.addCallCnt(i);
-                    faivoritAdapter.notifyDataSetChanged();
+        if(frAdapter != null){
+            boolean overlap = false;
+            for(int i = 0; i < frAdapter.getItemCnt(); i++){
+                if(roomId.equals(frAdapter.getRoomId(i))){
+                    frAdapter.updateRecord(i);
+                    updateAdapter();
+                    overlap = true;
                     break;
                 }
+            }
+
+            if(!overlap) {
+                frAdapter.add(roomId, frAdapter.faivoriteCnt);
+                updateAdapter();
+                overlap = false;
+            }
+
+
+            if(frAdapter.getItemCnt() == 0){
+                frAdapter.add(roomId, frAdapter.faivoriteCnt);
+                updateAdapter();
             }
         }
 
@@ -541,13 +560,24 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    public void adapterCall(String roomName){
-        connectToRoom(roomName, false, false, false, 0);
+    public void adapterCall(String roomId){
+        connectToRoom(roomId, false, false, false, 0);
     }
 
     public void updateAdapter(){
-        if(faivoritAdapter != null) {
-            faivoritAdapter.notifyDataSetChanged();
+        if(frAdapter != null){
+            frAdapter.notifyDataSetChanged();
         }
+
+        /*
+
+        gson = new GsonBuilder().create();
+        String saveAdapter = gson.toJson(frAdapter);
+
+        editor.putString("adapter", saveAdapter);
+        editor.commit();
+
+        */
     }
+
 }

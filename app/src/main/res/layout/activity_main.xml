@@ -43,18 +43,12 @@
                 android:layout_height="48dp"
                 android:background="@android:drawable/sym_action_call" />
 
-            <Button
-                android:id="@+id/favorites_btn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:background="@drawable/star" />
         </androidx.appcompat.widget.LinearLayoutCompat>
 
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
             android:orientation="horizontal"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
@@ -100,51 +94,14 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:id="@+id/faivorit_text_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@android:color/holo_blue_bright"
-                android:gravity="center"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/faivorit_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="@drawable/top_bottom_right_border"
-                    android:gravity="center"
-                    android:text="즐겨찾기"
-                    android:textSize="24sp" />
-
-                <TextView
-                    android:id="@+id/all_faivorit_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:layout_weight="3"
-                    android:background="@drawable/top_bottom_right_border"
-                    android:gravity="center"
-                    android:text="전체보기" />
-            </LinearLayout>
-
-            <ListView
-                android:id="@+id/faivorit_List"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:visibility="visible">
-
-            </ListView>
-
-            <LinearLayout
-                android:id="@+id/record_Text_Layout"
+                android:id="@+id/text_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/record_text"
+                    android:id="@+id/open_close"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -161,10 +118,11 @@
                     android:background="@drawable/top_bottom_right_border"
                     android:gravity="center"
                     android:text="전체보기" />
+
             </LinearLayout>
 
             <ListView
-                android:id="@+id/record_List"
+                android:id="@+id/faivorit_record_list"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1" />
