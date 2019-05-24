@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,25 +22,40 @@ public class FRAdapter extends BaseAdapter {
 
     private Context context;
 
-    private int itemCnt;
-    public int faivoriteCnt;
+    TextView title;
 
-    FRAdapter(Context _context, int _cnt){
+    private int itemCnt;
+    int favoriteCnt;
+
+    FRAdapter(Context _context, int _cnt, TextView title){
         this.context = _context;
         this.itemCnt = _cnt;
+        this.title = title;
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
     public void add(String roomId, int addNum){
         items.add(addNum, new FRContent(roomId));
+
+        if (items.size() == 0) {
+            title.setText("통화기록 없음");
+        } else {
+            title.setText("통화기록");
+        }
     }
 
     public void remove(int position){
         if(items.get(position).isFaivorite){
-            faivoriteCnt -= 1;
+            favoriteCnt -= 1;
         }
         items.remove(position);
+
+        if (items.size() == 0) {
+            title.setText("통화기록 없음");
+        } else {
+            title.setText("통화기록");
+        }
     }
 
     @Override
@@ -135,14 +149,14 @@ public class FRAdapter extends BaseAdapter {
                     ((MainActivity)MainActivity.context).updateAdapter();
                     items.get(position).addFaivoriteBtn.setBackgroundResource(R.drawable.star_non_color);
                     items.get(items.size()-1).changeIsFaivorite();
-                    faivoriteCnt -= 1;
+                    favoriteCnt -= 1;
                 }else{
                     items.remove(position);
                     items.add(0, tmp);
                     ((MainActivity)MainActivity.context).updateAdapter();
                     items.get(0).addFaivoriteBtn.setBackgroundResource(R.drawable.star_color);
                     items.get(0).changeIsFaivorite();
-                    faivoriteCnt += 1;
+                    favoriteCnt += 1;
                 }
 
 
@@ -240,7 +254,13 @@ public class FRAdapter extends BaseAdapter {
 
         }else{
             items.remove(position);
-            items.add(faivoriteCnt, tmp);
+            items.add(favoriteCnt, tmp);
+        }
+
+        if (items.size() == 0) {
+            title.setText("통화기록 없음");
+        } else {
+            title.setText("통화기록");
         }
     }
 

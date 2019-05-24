@@ -13,11 +13,9 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.URLUtil;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -29,7 +27,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.uswit.videocalltranslate.apprtc.CallActivity;
 
 import java.util.Random;
@@ -128,27 +125,11 @@ public class MainActivity extends Activity {
 
         lang = prefs.getString("lang", "ko");
 
-        Button langSet = findViewById(R.id.btn_langset);
-        langSet.setOnClickListener(view -> {
-            editor = prefs.edit();
-            editor.putBoolean("setbool", false);
-            editor.apply();
-
-            startActivity(new Intent(this, IntroActivity.class));
-
-            finish();
-        });
-
-        Button chatRecent = findViewById(R.id.btn_chatRecent);
-        chatRecent.setOnClickListener(view -> {
-            startActivity(new Intent(this, SelectRecentActivity.class));
-        });
-
         callRecordCnt = 10;
 
         //String loadAdapter = prefs.getString("adapter", "");
 
-        frListView = (ListView)findViewById(R.id.faivorit_record_list);
+        frListView = findViewById(R.id.faivorit_record_list);
 
         /*
         if(loadAdapter.equals("")) {
@@ -157,8 +138,9 @@ public class MainActivity extends Activity {
             frAdapter = gson.fromJson(loadAdapter, FRAdapter.class);
         }
         */
+        TextView title = findViewById(R.id.open_close);
 
-        frAdapter = new FRAdapter(this, callRecordCnt);
+        frAdapter = new FRAdapter(this, callRecordCnt, title);
 
         frListView.setAdapter(frAdapter);
 
@@ -176,6 +158,15 @@ public class MainActivity extends Activity {
         });
         */
 
+        LinearLayout chatRecordBtn = findViewById(R.id.chat_record_Layout);
+        chatRecordBtn.setOnClickListener(view -> {
+            startActivity(new Intent(this, SelectRecentActivity.class));
+        });
+
+        LinearLayout settingBtn = findViewById(R.id.set);
+        settingBtn.setOnClickListener(view -> {
+            Toast.makeText(this, "미구현", Toast.LENGTH_SHORT).show();
+        });
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -273,14 +264,14 @@ public class MainActivity extends Activity {
             }
 
             if(!overlap) {
-                frAdapter.add(roomId, frAdapter.faivoriteCnt);
+                frAdapter.add(roomId, frAdapter.favoriteCnt);
                 updateAdapter();
                 overlap = false;
             }
 
 
             if(frAdapter.getItemCnt() == 0){
-                frAdapter.add(roomId, frAdapter.faivoriteCnt);
+                frAdapter.add(roomId, frAdapter.favoriteCnt);
                 updateAdapter();
             }
         }

@@ -117,21 +117,25 @@ public class SelectRecentActivity extends AppCompatActivity {
         RecyclerView.LayoutManager subLayoutManager = new LinearLayoutManager(this);
         recyclerSubView.setLayoutManager(subLayoutManager);
 
-        RecyclerView.LayoutManager viewLayoutManager = new LinearLayoutManager(this);
-
         ArrayList<String> fName = new ArrayList<>();
         File files = new File(this.getApplicationContext().getExternalFilesDir(null), "chat");
 
         String[] textSet = null;
 
-        if (files.listFiles().length > 0) {
-            for (File file : files.listFiles()) {
-                fName.add(file.getName());
-            }
+        if (files.exists()) {
+            if (files.listFiles().length > 0) {
+                for (File file : files.listFiles()) {
+                    fName.add(file.getName());
+                }
 
-            textSet = fName.toArray(new String[fName.size()]);
-            RecyclerView.Adapter adapter = new RecentAdapter(textSet, false);
-            recyclerView.setAdapter(adapter);
+                textSet = fName.toArray(new String[fName.size()]);
+                RecyclerView.Adapter adapter = new RecentAdapter(textSet, false);
+                recyclerView.setAdapter(adapter);
+            } else {
+                roomLayout.setVisibility(View.GONE);
+                TextView norecent = findViewById(R.id.txt_norecent);
+                norecent.setVisibility(View.VISIBLE);
+            }
         } else {
             roomLayout.setVisibility(View.GONE);
             TextView norecent = findViewById(R.id.txt_norecent);
