@@ -3,6 +3,7 @@ package com.uswit.videocalltranslate;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,11 +15,14 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.api.client.json.Json;
+import com.google.type.Color;
+
 import java.util.ArrayList;
 
 public class FRAdapter extends BaseAdapter {
     private ArrayList<FRContent> items = new ArrayList<>();
-    private ArrayList<FRContent> addItem = new ArrayList<>();
+    private ArrayList<JsonUser> userArray = new ArrayList<>();
 
     private Context context;
 
@@ -31,6 +35,31 @@ public class FRAdapter extends BaseAdapter {
         this.context = _context;
         this.itemCnt = _cnt;
         this.title = title;
+    }
+
+    FRAdapter(Context _context, int _cnt, TextView title, ArrayList<JsonUser> _userArray){
+        this.context = _context;
+        this.itemCnt = _cnt;
+        this.title = title;
+        this.userArray.addAll(_userArray);
+
+        if(_userArray.isEmpty() || _userArray == null){
+            Log.d("JsonTest", Integer.toString(userArray.size()));
+        }
+
+
+        for(int i = 0; i < userArray.size(); i++){
+            Log.d("JsonTest", "추가");
+            String roomId = (String)userArray.get(i).roomId;
+            String roomName = (String)userArray.get(i).roomName;
+            boolean isFaivorite = (boolean)userArray.get(i).isFaivorite;
+
+            FRContent tmp = new FRContent(roomId, roomName, isFaivorite);
+
+            Log.d("JsonTest", tmp.roomId);
+
+            items.add(tmp);
+        }
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -48,6 +77,7 @@ public class FRAdapter extends BaseAdapter {
     public void remove(int position){
         if(items.get(position).isFaivorite){
             favoriteCnt -= 1;
+            Log.d("JsonTest", "remove");
         }
         items.remove(position);
 
@@ -93,6 +123,7 @@ public class FRAdapter extends BaseAdapter {
         Button addFaivoriteBtn = (Button)convertView.findViewById(R.id.addFaivorite);
         LinearLayout layout = (LinearLayout)convertView.findViewById(R.id.layout);
 
+
         items.get(position).layout = layout;
         items.get(position).addFaivoriteBtn = addFaivoriteBtn;
 
@@ -120,23 +151,25 @@ public class FRAdapter extends BaseAdapter {
             }
         });
 
+        /*
         fTextView.setOnTouchListener(new View.OnTouchListener() {                //터치이벤트
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        items.get(position).layout.setBackgroundColor(0x60FFFFFF);
+                        items.get(position).layout.setBackgroundColor(0x60000000);
                         break;
                     case MotionEvent.ACTION_UP:
-                        items.get(position).layout.setBackgroundColor(0x000000);
+                        items.get(position).layout.setBackgroundColor(0x00FFFFFF);
                         break;
                     case MotionEvent.ACTION_CANCEL:
-                        items.get(position).layout.setBackgroundColor(0x000000);
-
+                        items.get(position).layout.setBackgroundColor(0x00FFFFFF);
+                        break;
                 }
                 return false;
             }
         });
+        */
 
         addFaivoriteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,6 +211,12 @@ public class FRAdapter extends BaseAdapter {
             roomId = _roomId;
             roomName = roomId;
             isFaivorite= false;
+        }
+
+        private FRContent(String _roomId, String _roomName, boolean _isFaivorite){
+            roomId = _roomId;
+            roomName = _roomName;
+            isFaivorite = _isFaivorite;
         }
 
         void changeIsFaivorite(){
@@ -240,10 +279,6 @@ public class FRAdapter extends BaseAdapter {
         builder.show();
     }
 
-    void changeShowItems(){
-
-    }
-
     public String getRoomId(int position){
         return items.get(position).roomId;
     }
@@ -264,7 +299,29 @@ public class FRAdapter extends BaseAdapter {
         }
     }
 
-    public ArrayList getItemArray(){
-        return items;
+    public ArrayList<JsonUser> getUserArr(){
+        userArray.clear();
+
+        Log.d("JsonTest", "userArray" + Integer.toString(userArray.size()));
+
+        for(int i = 0; i < items.size(); i++) {
+            String roomId = items.get(i).roomId;
+            String roomName = items.get(i).roomName;
+            boolean isFaivorite = items.get(i).isFaivorite;
+
+            userArray.add(new JsonUser(roomId, roomName, isFaivorite));
+
+
+        }
+
+        return userArray;
+    }
+
+    public int getFavoriteCnt(){
+        return favoriteCnt;
+    }
+
+    public void setFavoriteCnt(int cnt){
+        this.favoriteCnt = cnt;
     }
 }

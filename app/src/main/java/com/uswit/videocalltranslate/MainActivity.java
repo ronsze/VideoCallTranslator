@@ -27,8 +27,14 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.uswit.videocalltranslate.apprtc.CallActivity;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 public class MainActivity extends Activity {
@@ -53,15 +59,16 @@ public class MainActivity extends Activity {
     private String keyprefAudioBitrateValue;
     private String keyprefRoomServerUrl;
     private String keyprefRoom;
+    private SharedPreferences.Editor editor;
 
     private FRAdapter frAdapter;
 
     private ListView frListView;
     private int callRecordCnt;
 
-    private  Gson gson;
+    private SharedPreferences prefs;
 
-    SharedPreferences.Editor editor;
+    private  Gson gson;
 
     private TextView close_open_text;
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -101,7 +108,7 @@ public class MainActivity extends Activity {
         keyprefRoomServerUrl = getString(R.string.pref_room_server_url_key);
         keyprefRoom = getString(R.string.pref_room_key);
 
-        SharedPreferences prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
+        prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
 
         ImageButton connectButton = findViewById(R.id.connect_button);
         connectButton.setOnClickListener(v -> {
@@ -124,25 +131,34 @@ public class MainActivity extends Activity {
         }
 
         lang = prefs.getString("lang", "ko");
-
         callRecordCnt = 10;
+        TextView title = findViewById(R.id.open_close);
 
-        //String loadAdapter = prefs.getString("adapter", "");
+        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+        //frAdapter 생성
+
+        editor = sharedPref.edit();
+
+        ArrayList<JsonUser> users = new ArrayList<>();
+
+        users.addAll(loadJson());
+
+        if(users.isEmpty() || users == null){
+            Log.d("JsonTest", "users is Empty");
+            frAdapter = new FRAdapter(this, callRecordCnt, title);
+        }else{
+            Log.d("JsonTest", "users is not Empty");
+            title.setText("통화기록");
+            frAdapter = new FRAdapter(this, callRecordCnt, title, users);
+            int favoriteCnt = sharedPref.getInt("favoriteCnt", 0);
+            frAdapter.setFavoriteCnt(favoriteCnt);
+        }
+
 
         frListView = findViewById(R.id.faivorit_record_list);
 
-        /*
-        if(loadAdapter.equals("")) {
-            frAdapter = new FRAdapter(this, callRecordCnt);
-        }else{
-            frAdapter = gson.fromJson(loadAdapter, FRAdapter.class);
-        }
-        */
-        TextView title = findViewById(R.id.open_close);
-
-        frAdapter = new FRAdapter(this, callRecordCnt, title);
-
         frListView.setAdapter(frAdapter);
+        //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
         /*
         close_open_text = (TextView)findViewById(R.id.open_close);
@@ -200,6 +216,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        saveJson();
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
@@ -264,6 +281,7 @@ public class MainActivity extends Activity {
             }
 
             if(!overlap) {
+                Log.d("JsonText", Integer.toString(frAdapter.favoriteCnt));
                 frAdapter.add(roomId, frAdapter.favoriteCnt);
                 updateAdapter();
                 overlap = false;
@@ -559,16 +577,71 @@ public class MainActivity extends Activity {
         if(frAdapter != null){
             frAdapter.notifyDataSetChanged();
         }
+    }
 
-        /*
+    private void saveJson(){
+        ArrayList<JsonUser> users = new ArrayList<>();
+        users.addAll(frAdapter.getUserArr());
 
-        gson = new GsonBuilder().create();
-        String saveAdapter = gson.toJson(frAdapter);
+        try {
+            JSONArray jArray = new JSONArray();
+            for(int i = 0; i < users.size(); i++){
+                JSONObject jObject = new JSONObject();
+                jObject.put("roomId", users.get(i).roomId);
+                jObject.put("roomName", users.get(i).roomName);
+                jObject.put("isFaivorite", users.get(i).isFaivorite);
 
-        editor.putString("adapter", saveAdapter);
-        editor.commit();
+                Log.d("JsonTest", users.get(i).roomId);
+                jArray.put(jObject);
+            }
 
-        */
+            if(users.isEmpty() || users == null){
+                Log.d("JsonTest", "users is Empty or null");
+                editor.putString("users", null);
+            }else{
+                Log.d("JsonTest", "users not Empty");
+                editor.putString("users", jArray.toString());
+                editor.putInt("favoriteCnt", frAdapter.getFavoriteCnt());
+            }
+            boolean commit = editor.commit();
+            if(commit){
+                Log.d("JsonTest", "Json Commit Success");
+            }else{
+                Log.d("JsonTest", "Json Commit fail");
+            }
+
+        }catch (JSONException e){
+            e.printStackTrace();
+        }
+    }
+
+    private ArrayList<JsonUser> loadJson(){
+        String json = sharedPref.getString("users", null);
+
+        ArrayList<JsonUser> users = new ArrayList<>();
+
+        if(json != null){
+            Log.d("JsonTest", "json not null");
+            try{
+                JSONArray jArray = new JSONArray(json);
+                for(int i = 0; i < jArray.length(); i++){
+                    JSONObject jObject = jArray.getJSONObject(i);
+                    String roomId = jObject.getString("roomId");
+                    String roomName = jObject.getString("roomName");
+                    boolean isFaivorite = jObject.getBoolean("isFaivorite");
+
+                    Log.d("JsonTest", roomId);
+
+                    JsonUser tmp = new JsonUser(roomId, roomName, isFaivorite);
+                    users.add(tmp);
+                }
+
+            }catch (JSONException e){
+                e.printStackTrace();
+            }
+        }
+
+        return users;
     }
 
 }
