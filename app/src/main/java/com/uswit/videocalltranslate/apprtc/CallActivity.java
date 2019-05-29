@@ -824,7 +824,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             }
         }
         String saveName;
-        if(value == null)
+        if(value.isEmpty())
             saveName = connTime;
         else
             saveName = connTime + "_" + value;

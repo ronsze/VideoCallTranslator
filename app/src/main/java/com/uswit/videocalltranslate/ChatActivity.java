@@ -17,9 +17,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.uswit.videocalltranslate.apprtc.AdapterContent;
 import com.uswit.videocalltranslate.apprtc.CustomAdapter;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class ChatActivity extends AppCompatActivity {
+
+    SelectRecentActivity selectRecentActivity = (SelectRecentActivity)SelectRecentActivity.selectRecentActivity;
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -33,7 +38,7 @@ public class ChatActivity extends AppCompatActivity {
         String recentName = intent.getStringExtra("recentName");
         String roomName = intent.getStringExtra("roomName");
         String date = intent.getStringExtra("date");
-        ArrayList<AdapterContent> items = intent.getParcelableArrayListExtra("items");
+        String fileDir = intent.getStringExtra("fileDir");
 
         TextView barTitle = findViewById(R.id.barTitle);
         barTitle.setText(roomName + " > " + recentName);
@@ -47,7 +52,41 @@ public class ChatActivity extends AppCompatActivity {
         assert actionBar != null;
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayHomeAsUpEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        StringBuilder data = new StringBuilder();
+
+        File file = new File(fileDir);
+        Scanner scan = null;
+        try {
+            scan = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        assert scan != null;
+        while(scan.hasNextLine()){
+            data.append(scan.nextLine());
+        }
+
+        ArrayList<AdapterContent> items = new ArrayList<>();
+
+        int localIndex = data.indexOf("<local>");
+        int remoteIndex = data.indexOf("<remote>");
+
+        while (localIndex != -1 || remoteIndex != -1) {
+            if (((localIndex < remoteIndex) && localIndex != -1) || remoteIndex == -1) {
+                String str = data.substring(0, localIndex);
+                data.delete(0, localIndex + "<local>".length());
+                items.add(new AdapterContent(str.split("\\|")[0], str.split("\\|")[2], R.id.chat_local, str.split("\\|")[1]));
+            } else if (remoteIndex < localIndex || localIndex == -1) {
+                String str = data.substring(0, remoteIndex);
+                data.delete(0, remoteIndex + "<remote>".length());
+                items.add(new AdapterContent(str.split("\\|")[0], str.split("\\|")[2], R.id.chat_remote, str.split("\\|")[1]));
+            }
+
+            localIndex = data.indexOf("<local>");
+            remoteIndex = data.indexOf("<remote>");
+        }
 
         RecyclerView recyclerView = findViewById(R.id.recordList_Call);
 
@@ -76,6 +115,7 @@ public class ChatActivity extends AppCompatActivity {
                 return true;
 
             case R.id.action_close:
+                selectRecentActivity.finish();
                 finish();
                 return true;
 
@@ -84,5 +124,10 @@ public class ChatActivity extends AppCompatActivity {
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 }

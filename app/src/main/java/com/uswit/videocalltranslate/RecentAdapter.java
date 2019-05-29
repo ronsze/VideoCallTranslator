@@ -33,10 +33,14 @@ public class RecentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        if(holder instanceof MyViewHolder)
-            ((MyViewHolder)holder).onBind(textSet[position].substring(1), isSub);
-        else
-            ((TimeViewHolder)holder).onBind(textSet[position].substring(1));
+        if(isSub) {
+            if(holder instanceof MyViewHolder)
+                ((MyViewHolder)holder).onBind(textSet[position].substring(1), true);
+            else
+                ((TimeViewHolder)holder).onBind(textSet[position].substring(1));
+        } else {
+            ((MyViewHolder)holder).onBind(textSet[position], false);
+        }
     }
 
     @Override
