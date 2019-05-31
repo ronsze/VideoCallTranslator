@@ -20,6 +20,24 @@
     <string name="reco_ready">Say now</string>
     <string name="btn_reco">Recognition</string>
     <string name="btn_change">Change</string>
+    <string name="call_record">Call record</string>
+    <string name="empty_call_record">No call record.</string>
+    <string name="change_name">Change Name</string>
+    <string name="delete_record">Delete</string>
+    <string name="input_cng_name">Input your name</string>
+    <string name="cancel">Cancel</string>
+    <string name="enter">Enter</string>
+    <string name="input">Input</string>
+    <string name="empty_name_input">You have not entered a name.</string>
+    <string name="chat_record">Chatting recrod</string>
+
+    <!-- 셋팅 -->
+    <string name="setting">Setting</string>
+    <string name="lang_smr">Choose your preferred language.</string>
+    <string name="lang_kr">Korean</string>
+    <string name="lang_en">English</string>
+    <string name="delete_all">Delete all record</string>
+    <string name="delete_all_smr">Delete all call records and favorites.</string>
 
     <!-- 영상통화 -->
     <string name="disconnect_call">Disconnect</string>

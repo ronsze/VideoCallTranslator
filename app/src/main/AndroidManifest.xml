@@ -25,6 +25,7 @@
         <activity android:name=".apprtc.CallActivity" />
         <activity android:name=".SelectRecentActivity" />
         <activity android:name=".ChatActivity" />
+        <activity android:name=".SettingActivity"/>
 
         <service android:name=".SpeechService"/>
     </application>

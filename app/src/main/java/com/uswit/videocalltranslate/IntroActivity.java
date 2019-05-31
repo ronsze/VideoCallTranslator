@@ -14,17 +14,28 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class IntroActivity extends AppCompatActivity {
     private String strLanguage;
+    private Intent set_Intent;
+    private boolean isSet;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.intro);
 
+        isSet = false;
+
+        set_Intent = getIntent();
+
+        if(set_Intent != null){
+            isSet = set_Intent.getBooleanExtra("isSet", false);
+        }
+
         Locale systemLocale = getResources().getConfiguration().locale;
         strLanguage = systemLocale.getLanguage();
 
         SharedPreferences prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
         boolean setbool = prefs.getBoolean("setbool", false);
+        setbool = !isSet;
 
         if (setbool) {
             String setLang = prefs.getString("lang", strLanguage);
@@ -89,7 +100,12 @@ public class IntroActivity extends AppCompatActivity {
             editor.apply();
 
             //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
-            Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+            Intent intent;
+            if(!isSet) {
+                intent = new Intent(IntroActivity.this, MainActivity.class);
+            }else{
+                intent = new Intent(IntroActivity.this, SettingActivity.class);
+            }
             startActivity(intent);
             finish();
         });
@@ -102,5 +118,11 @@ public class IntroActivity extends AppCompatActivity {
         getResources().updateConfiguration(config, null);
 
         strLanguage = code;
+    }
+
+    public void onBackPressed(){
+        Intent intent = new Intent(IntroActivity.this, SettingActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

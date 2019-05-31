@@ -51,6 +51,18 @@ android {
         jniLibs.srcDir 'libs'
         jni.srcDirs = []
     }
+
+    sourceSets {
+        main {
+            res.srcDirs =
+                    [
+                            'src/main/res/layout/pref_btns/layout',
+                            'src/main/res/layout/pref_btns',
+                            'src/main/res/layout',
+                            'src/main/res'
+                    ]
+        }
+    }
 }
 
 protobuf {
@@ -107,8 +119,8 @@ configurations {
     all*.exclude group: 'com.google.guava', module: 'listenablefuture'
 }
 
-repositories{
-    flatDir{
+repositories {
+    flatDir {
         dirs 'libs'
     }
 

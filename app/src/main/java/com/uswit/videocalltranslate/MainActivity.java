@@ -18,6 +18,7 @@ import android.view.WindowManager;
 import android.webkit.URLUtil;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -132,7 +133,11 @@ public class MainActivity extends Activity {
 
         lang = prefs.getString("lang", "ko");
         callRecordCnt = 10;
+
         TextView title = findViewById(R.id.open_close);
+        TextView mainTitle = findViewById(R.id.main_title);
+        LinearLayout callFR = findViewById(R.id.chat_record_Layout);
+        LinearLayout setBtn = findViewById(R.id.set);
 
         //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
         //frAdapter 생성
@@ -144,11 +149,9 @@ public class MainActivity extends Activity {
         users.addAll(loadJson());
 
         if(users.isEmpty() || users == null){
-            Log.d("JsonTest", "users is Empty");
             frAdapter = new FRAdapter(this, callRecordCnt, title);
         }else{
-            Log.d("JsonTest", "users is not Empty");
-            title.setText("통화기록");
+            title.setText(R.string.call_record);
             frAdapter = new FRAdapter(this, callRecordCnt, title, users);
             int favoriteCnt = sharedPref.getInt("favoriteCnt", 0);
             frAdapter.setFavoriteCnt(favoriteCnt);
@@ -158,6 +161,7 @@ public class MainActivity extends Activity {
         frListView = findViewById(R.id.faivorit_record_list);
 
         frListView.setAdapter(frAdapter);
+
         //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
         /*
@@ -181,7 +185,9 @@ public class MainActivity extends Activity {
 
         LinearLayout settingBtn = findViewById(R.id.set);
         settingBtn.setOnClickListener(view -> {
-            Toast.makeText(this, "미구현", Toast.LENGTH_SHORT).show();
+            Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
+            startActivity(setIntent);
+            finish();
         });
     }
 
@@ -198,6 +204,12 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+
+        TextView set = findViewById(R.id.set_btn);
+        TextView record = findViewById(R.id.chat_record_btn);
+
+        set.setText(R.string.setting);
+        record.setText(R.string.call_record);
     }
 
     @Override
@@ -281,7 +293,6 @@ public class MainActivity extends Activity {
             }
 
             if(!overlap) {
-                Log.d("JsonText", Integer.toString(frAdapter.favoriteCnt));
                 frAdapter.add(roomId, frAdapter.favoriteCnt);
                 updateAdapter();
                 overlap = false;
@@ -591,15 +602,12 @@ public class MainActivity extends Activity {
                 jObject.put("roomName", users.get(i).roomName);
                 jObject.put("isFaivorite", users.get(i).isFaivorite);
 
-                Log.d("JsonTest", users.get(i).roomId);
                 jArray.put(jObject);
             }
 
             if(users.isEmpty() || users == null){
-                Log.d("JsonTest", "users is Empty or null");
                 editor.putString("users", null);
             }else{
-                Log.d("JsonTest", "users not Empty");
                 editor.putString("users", jArray.toString());
                 editor.putInt("favoriteCnt", frAdapter.getFavoriteCnt());
             }
@@ -621,7 +629,6 @@ public class MainActivity extends Activity {
         ArrayList<JsonUser> users = new ArrayList<>();
 
         if(json != null){
-            Log.d("JsonTest", "json not null");
             try{
                 JSONArray jArray = new JSONArray(json);
                 for(int i = 0; i < jArray.length(); i++){
@@ -629,8 +636,6 @@ public class MainActivity extends Activity {
                     String roomId = jObject.getString("roomId");
                     String roomName = jObject.getString("roomName");
                     boolean isFaivorite = jObject.getBoolean("isFaivorite");
-
-                    Log.d("JsonTest", roomId);
 
                     JsonUser tmp = new JsonUser(roomId, roomName, isFaivorite);
                     users.add(tmp);
@@ -642,6 +647,10 @@ public class MainActivity extends Activity {
         }
 
         return users;
+    }
+
+    public void remove_all_records(){
+        frAdapter.remove_all();
     }
 
 }

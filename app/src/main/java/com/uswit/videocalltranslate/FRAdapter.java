@@ -3,7 +3,6 @@ package com.uswit.videocalltranslate;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -14,10 +13,6 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.google.api.client.json.Json;
-import com.google.type.Color;
-
 import java.util.ArrayList;
 
 public class FRAdapter extends BaseAdapter {
@@ -43,20 +38,12 @@ public class FRAdapter extends BaseAdapter {
         this.title = title;
         this.userArray.addAll(_userArray);
 
-        if(_userArray.isEmpty() || _userArray == null){
-            Log.d("JsonTest", Integer.toString(userArray.size()));
-        }
-
-
         for(int i = 0; i < userArray.size(); i++){
-            Log.d("JsonTest", "추가");
-            String roomId = (String)userArray.get(i).roomId;
-            String roomName = (String)userArray.get(i).roomName;
-            boolean isFaivorite = (boolean)userArray.get(i).isFaivorite;
+            String roomId = userArray.get(i).roomId;
+            String roomName = userArray.get(i).roomName;
+            boolean isFaivorite = userArray.get(i).isFaivorite;
 
             FRContent tmp = new FRContent(roomId, roomName, isFaivorite);
-
-            Log.d("JsonTest", tmp.roomId);
 
             items.add(tmp);
         }
@@ -68,24 +55,27 @@ public class FRAdapter extends BaseAdapter {
         items.add(addNum, new FRContent(roomId));
 
         if (items.size() == 0) {
-            title.setText("통화기록 없음");
+            title.setText(R.string.empty_call_record);
         } else {
-            title.setText("통화기록");
+            title.setText(R.string.call_record);
         }
     }
 
     public void remove(int position){
         if(items.get(position).isFaivorite){
             favoriteCnt -= 1;
-            Log.d("JsonTest", "remove");
         }
         items.remove(position);
 
         if (items.size() == 0) {
-            title.setText("통화기록 없음");
+            title.setText(R.string.empty_call_record);
         } else {
-            title.setText("통화기록");
+            title.setText(R.string.call_record);
         }
+    }
+
+    public void remove_all(){
+        items.clear();
     }
 
     @Override
@@ -138,15 +128,19 @@ public class FRAdapter extends BaseAdapter {
         fTextView.setOnClickListener(new View.OnClickListener() {                //짧게클릭
             @Override
             public void onClick(View v) {
+                fTextView.setEnabled(false);
                 ((MainActivity)MainActivity.context).adapterCall(items.get(position).roomId);
                 ((MainActivity)MainActivity.context).updateAdapter();
+                fTextView.setEnabled(true);
             }
         });
 
         fTextView.setOnLongClickListener(new View.OnLongClickListener() {        //길게클릭
             @Override
             public boolean onLongClick(View v) {
+                fTextView.setEnabled(false);
                 choiceDialog(position);
+                fTextView.setEnabled(true);
                 return false;
             }
         });
@@ -157,7 +151,7 @@ public class FRAdapter extends BaseAdapter {
             public boolean onTouch(View v, MotionEvent event) {
                 switch(event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        items.get(position).layout.setBackgroundColor(0x60000000);
+                        items.get(position).layout.setBackgroundColor(0x25000000);
                         break;
                     case MotionEvent.ACTION_UP:
                         items.get(position).layout.setBackgroundColor(0x00FFFFFF);
@@ -171,7 +165,9 @@ public class FRAdapter extends BaseAdapter {
         });
         */
 
+
         addFaivoriteBtn.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View v) {
                 FRContent tmp = items.get(position);
@@ -191,8 +187,6 @@ public class FRAdapter extends BaseAdapter {
                     items.get(0).changeIsFaivorite();
                     favoriteCnt += 1;
                 }
-
-
             }
         });
 
@@ -231,8 +225,8 @@ public class FRAdapter extends BaseAdapter {
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     private void choiceDialog(int position) {
         final ArrayList<String> dialogList = new ArrayList<>();
-        dialogList.add("이름 변경");
-        dialogList.add("삭제");
+        dialogList.add(context.getResources().getString(R.string.change_name));
+        dialogList.add(context.getResources().getString(R.string.delete_record));
 
         final CharSequence[] dialogitems = dialogList.toArray(new String[dialogList.size()]);
 
@@ -241,9 +235,9 @@ public class FRAdapter extends BaseAdapter {
         builder.setItems(dialogitems, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int pos) {
                 String selectedText = dialogitems[pos].toString();
-                if (selectedText.equals("이름 변경")) {
+                if (selectedText.equals(context.getResources().getString(R.string.change_name))) {
                     reNameDialog(position);
-                } else if (selectedText.equals("삭제")) {
+                } else if (selectedText.equals(context.getResources().getString(R.string.delete_record))) {
                     remove(position);
                     ((MainActivity)MainActivity.context).updateAdapter();
                 }
@@ -257,22 +251,22 @@ public class FRAdapter extends BaseAdapter {
         final EditText edittext = new EditText(context);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage("이름을 입력해주세요.");
+        builder.setMessage(R.string.input_cng_name);
         builder.setView(edittext);
-        builder.setNegativeButton("취소",
+        builder.setNegativeButton(R.string.cancel,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
 
                     }
                 });
-        builder.setPositiveButton("입력",
+        builder.setPositiveButton(R.string.input,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         if (edittext.getText().length() > 0 && edittext.getText() != null) {
                             items.get(position).roomName = edittext.getText().toString();
                             ((MainActivity)MainActivity.context).updateAdapter();
                         } else {
-                            Toast.makeText(context, "이름을 입력하지 않았습니다.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, R.string.empty_name_input, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -293,16 +287,14 @@ public class FRAdapter extends BaseAdapter {
         }
 
         if (items.size() == 0) {
-            title.setText("통화기록 없음");
+            title.setText(R.string.empty_call_record);
         } else {
-            title.setText("통화기록");
+            title.setText(R.string.call_record);
         }
     }
 
     public ArrayList<JsonUser> getUserArr(){
         userArray.clear();
-
-        Log.d("JsonTest", "userArray" + Integer.toString(userArray.size()));
 
         for(int i = 0; i < items.size(); i++) {
             String roomId = items.get(i).roomId;
@@ -310,8 +302,6 @@ public class FRAdapter extends BaseAdapter {
             boolean isFaivorite = items.get(i).isFaivorite;
 
             userArray.add(new JsonUser(roomId, roomName, isFaivorite));
-
-
         }
 
         return userArray;
