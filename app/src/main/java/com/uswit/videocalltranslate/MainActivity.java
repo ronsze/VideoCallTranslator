@@ -41,6 +41,7 @@ import java.util.Random;
 public class MainActivity extends Activity {
 
     public static Context context;
+    public static Activity activity;
     private static final String TAG = "ConnectActivity";
 
     String lang;
@@ -72,6 +73,10 @@ public class MainActivity extends Activity {
     private  Gson gson;
 
     private TextView close_open_text;
+
+    private TextView title;
+
+    private long endTime;
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
 
     @Override
@@ -87,6 +92,7 @@ public class MainActivity extends Activity {
         Settings.System.canWrite(this);
 
         context = this;
+        activity = this;
 
         setContentView(R.layout.activity_main);
 
@@ -134,10 +140,7 @@ public class MainActivity extends Activity {
         lang = prefs.getString("lang", "ko");
         callRecordCnt = 10;
 
-        TextView title = findViewById(R.id.open_close);
-        TextView mainTitle = findViewById(R.id.main_title);
-        LinearLayout callFR = findViewById(R.id.chat_record_Layout);
-        LinearLayout setBtn = findViewById(R.id.set);
+        title = findViewById(R.id.open_close);
 
         //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
         //frAdapter 생성
@@ -187,7 +190,6 @@ public class MainActivity extends Activity {
         settingBtn.setOnClickListener(view -> {
             Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
             startActivity(setIntent);
-            finish();
         });
     }
 
@@ -208,6 +210,9 @@ public class MainActivity extends Activity {
         TextView set = findViewById(R.id.set_btn);
         TextView record = findViewById(R.id.chat_record_btn);
 
+        if(frAdapter.isEmpty()) {
+            title.setText(R.string.empty_call_record);
+        }
         set.setText(R.string.setting);
         record.setText(R.string.call_record);
     }
@@ -651,6 +656,15 @@ public class MainActivity extends Activity {
 
     public void remove_all_records(){
         frAdapter.remove_all();
+        updateAdapter();
     }
 
+    public void onBackPressed(){
+        if(System.currentTimeMillis() - endTime >= 2000){
+            endTime = System.currentTimeMillis();
+            Toast.makeText(this, R.string.end_app, Toast.LENGTH_SHORT).show();
+        }else if(System.currentTimeMillis() - endTime < 2000){
+            super.onBackPressed();
+        }
+    }
 }

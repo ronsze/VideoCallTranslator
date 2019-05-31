@@ -30,6 +30,7 @@
     <string name="input">입력</string>
     <string name="empty_name_input">이름을 입력하지 않았습니다.</string>
     <string name="chat_record">채팅기록</string>
+    <string name="end_app">뒤로가기 버튼을 한번 더 누르면 종료합니다.</string>
 
 
     <!-- 셋팅 -->

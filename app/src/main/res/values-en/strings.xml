@@ -21,7 +21,7 @@
     <string name="btn_reco">Recognition</string>
     <string name="btn_change">Change</string>
     <string name="call_record">Call record</string>
-    <string name="empty_call_record">No call record.</string>
+    <string name="empty_call_record">call record is empty</string>
     <string name="change_name">Change Name</string>
     <string name="delete_record">Delete</string>
     <string name="input_cng_name">Input your name</string>
@@ -30,6 +30,7 @@
     <string name="input">Input</string>
     <string name="empty_name_input">You have not entered a name.</string>
     <string name="chat_record">Chatting recrod</string>
+    <string name="end_app">Press the Back button again to exit.</string>
 
     <!-- 셋팅 -->
     <string name="setting">Setting</string>

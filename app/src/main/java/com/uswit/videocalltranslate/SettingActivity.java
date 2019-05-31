@@ -48,22 +48,23 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(R.string.delete_all_smr);
-        builder.setNegativeButton(R.string.cancel,
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-
-                    }
-                });
-        builder.setPositiveButton(R.string.enter,
+        builder.setNegativeButton(R.string.enter,
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         ((MainActivity)MainActivity.context).remove_all_records();
+                    }
+                });
+        builder.setPositiveButton(R.string.cancel,
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+
                     }
                 });
         builder.show();
     }
 
     public void onBackPressed(){
+        MainActivity.activity.finish();
         startActivity(new Intent(SettingActivity.this, MainActivity.class));
         finish();
     }

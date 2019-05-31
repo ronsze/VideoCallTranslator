@@ -75,6 +75,7 @@ public class FRAdapter extends BaseAdapter {
     }
 
     public void remove_all(){
+        items.removeAll(items);
         items.clear();
     }
 
@@ -313,5 +314,13 @@ public class FRAdapter extends BaseAdapter {
 
     public void setFavoriteCnt(int cnt){
         this.favoriteCnt = cnt;
+    }
+
+    public boolean isEmpty(){
+        if(items.size() == 0){
+            return true;
+        }else{
+            return false;
+        }
     }
 }
