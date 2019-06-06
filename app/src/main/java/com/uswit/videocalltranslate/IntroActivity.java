@@ -17,6 +17,8 @@ public class IntroActivity extends AppCompatActivity {
     private Intent set_Intent;
     private boolean isSet;
 
+    private boolean isChanged = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -74,6 +76,8 @@ public class IntroActivity extends AppCompatActivity {
 
             Button button = findViewById(R.id.btn_next);
             button.setText(R.string.btn_next);
+
+            isChanged = !isChanged;
         });
 
         toggleButton_en.setOnClickListener(v -> {
@@ -90,6 +94,8 @@ public class IntroActivity extends AppCompatActivity {
 
             Button button = findViewById(R.id.btn_next);
             button.setText(R.string.btn_next);
+
+            isChanged = !isChanged;
         });
 
         findViewById(R.id.btn_next).setOnClickListener(v -> {
@@ -99,15 +105,7 @@ public class IntroActivity extends AppCompatActivity {
             editor.putBoolean("setbool", true);
             editor.apply();
 
-            //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
-            Intent intent;
-            if(!isSet) {
-                intent = new Intent(IntroActivity.this, MainActivity.class);
-            }else{
-                intent = new Intent(IntroActivity.this, SettingActivity.class);
-            }
-            startActivity(intent);
-            finish();
+            finishAndStart();
         });
     }
 
@@ -120,9 +118,21 @@ public class IntroActivity extends AppCompatActivity {
         strLanguage = code;
     }
 
+    void finishAndStart() {
+        if(isChanged) {
+
+            //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
+            Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+            startActivity(intent);
+            SettingActivity.activity.finish();
+            finish();
+
+        } else {
+            finish();
+        }
+    }
+
     public void onBackPressed(){
-        Intent intent = new Intent(IntroActivity.this, SettingActivity.class);
-        startActivity(intent);
-        finish();
+        finishAndStart();
     }
 }

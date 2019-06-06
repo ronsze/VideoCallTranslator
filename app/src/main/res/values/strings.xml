@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">자동번역 영상통화</string>
+    <string name="app_name">바이챗</string>
     <string name="select_lang">언어 선택</string>
     <string name="btn_next">다음</string>
     <string name="input_name">이름 입력</string>
@@ -20,8 +20,8 @@
     <string name="reco_ready">말하세요</string>
     <string name="btn_reco">음성인식</string>
     <string name="btn_change">변경</string>
-    <string name="call_record">통화기록</string>
-    <string name="empty_call_record">통화기록 없음</string>
+    <string name="call_record">접속기록</string>
+    <string name="empty_call_record">접속기록 없음</string>
     <string name="change_name">이름 변경</string>
     <string name="delete_record">삭제</string>
     <string name="input_cng_name">이름을 입력해주세요.</string>

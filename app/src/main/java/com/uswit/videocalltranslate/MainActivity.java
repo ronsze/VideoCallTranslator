@@ -1,34 +1,46 @@
 package com.uswit.videocalltranslate;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.StateListAnimator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.URLUtil;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.uswit.videocalltranslate.apprtc.CallActivity;
 
 import org.json.JSONArray;
@@ -36,13 +48,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
 
+    @SuppressLint("StaticFieldLeak")
     public static Context context;
     public static Activity activity;
     private static final String TAG = "ConnectActivity";
+
+    boolean isBottomCollapsed = true;
+    private SelectRecentFragment selectRecentFragment;
+    private BottomSheetBehavior behavior;
 
     String lang;
 
@@ -83,18 +101,56 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
-        getWindow().addFlags(Window.FEATURE_NO_TITLE);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-
         Settings.System.canWrite(this);
 
         context = this;
         activity = this;
 
+        selectRecentFragment = new SelectRecentFragment();
+        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.add(R.id.recent_bottom_sheet, selectRecentFragment);
+        ft.commit();
+
         setContentView(R.layout.activity_main);
+
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        assert actionBar != null;
+        actionBar.setDisplayShowCustomEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setDisplayHomeAsUpEnabled(false);
+
+        AppBarLayout appBarLayout = findViewById(R.id.app_bar);
+        StateListAnimator stateListAnimator = new StateListAnimator();
+        stateListAnimator.addState(new int[0], ObjectAnimator.ofFloat(appBarLayout, "elevation", 0));
+        appBarLayout.setStateListAnimator(stateListAnimator);
+
+        FrameLayout llBottomSheet = findViewById(R.id.recent_bottom_sheet);
+        behavior = BottomSheetBehavior.from(llBottomSheet);
+
+        behavior.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+            @Override
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                if(BottomSheetBehavior.STATE_EXPANDED == newState) {
+                    isBottomCollapsed = false;
+                    if(!selectRecentFragment.isSub) {
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.detach(selectRecentFragment).attach(selectRecentFragment).commit();
+                    }
+                } else if(BottomSheetBehavior.STATE_COLLAPSED == newState) {
+                    isBottomCollapsed = true;
+                    if(!selectRecentFragment.isSub)
+                        selectRecentFragment.collapsTitle(true);
+                }
+            }
+
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+
+            }
+        });
 
         if((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
                 || (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
@@ -118,8 +174,8 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
 
         ImageButton connectButton = findViewById(R.id.connect_button);
-        connectButton.setOnClickListener(v -> {
-            EditText roomEditText = findViewById(R.id.room_edittext);
+        connectButton.setOnClickListener(view -> {
+            EditText roomEditText = findViewById(R.id.contact_name_call);
             if(roomEditText.getText().length() > 0 && roomEditText.getText() != null) {
                 connectToRoom(roomEditText.getText().toString(), false, false, false, 0);
                 roomEditText.setText("");
@@ -127,7 +183,7 @@ public class MainActivity extends Activity {
         });
 
         // If an implicit VIEW intent is launching the app, go directly to that URL.
-        final Intent intent = getIntent();
+        /*final Intent intent = getIntent();
         if ("android.intent.action.VIEW".equals(intent.getAction()) && !commandLineRun) {
             boolean loopback = intent.getBooleanExtra(CallActivity.EXTRA_LOOPBACK, false);
             int runTimeMs = intent.getIntExtra(CallActivity.EXTRA_RUNTIME, 0);
@@ -135,7 +191,7 @@ public class MainActivity extends Activity {
                     intent.getBooleanExtra(CallActivity.EXTRA_USE_VALUES_FROM_INTENT, false);
             String room = sharedPref.getString(keyprefRoom, "");
             connectToRoom(room, true, loopback, useValuesFromIntent, runTimeMs);
-        }
+        }*/
 
         lang = prefs.getString("lang", "ko");
         callRecordCnt = 10;
@@ -181,12 +237,8 @@ public class MainActivity extends Activity {
         });
         */
 
-        LinearLayout chatRecordBtn = findViewById(R.id.chat_record_Layout);
-        chatRecordBtn.setOnClickListener(view -> {
-            startActivity(new Intent(this, SelectRecentActivity.class));
-        });
 
-        LinearLayout settingBtn = findViewById(R.id.set);
+        ImageButton settingBtn = findViewById(R.id.setting);
         settingBtn.setOnClickListener(view -> {
             Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
             startActivity(setIntent);
@@ -207,14 +259,9 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
 
-        TextView set = findViewById(R.id.set_btn);
-        TextView record = findViewById(R.id.chat_record_btn);
-
         if(frAdapter.isEmpty()) {
             title.setText(R.string.empty_call_record);
         }
-        set.setText(R.string.setting);
-        record.setText(R.string.call_record);
     }
 
     @Override
@@ -566,7 +613,20 @@ public class MainActivity extends Activity {
 
             intent.putExtra("lang", lang);
 
-            startActivityForResult(intent, CONNECTION_REQUEST);
+            Resources resources = context.getResources();
+            DisplayMetrics metrics = resources.getDisplayMetrics();
+            int width = metrics.widthPixels;
+            int height = metrics.heightPixels;
+            ActivityOptionsCompat options = ActivityOptionsCompat.
+                    makeSceneTransitionAnimation(this, findViewById(R.id.main_layout), "transition");
+
+            int revealX = (width / 2);
+            int revealY = (height / 2);
+
+            intent.putExtra(CallActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
+            intent.putExtra(CallActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+
+            startActivityForResult(intent, CONNECTION_REQUEST, options.toBundle());
         }
     }
 
@@ -585,14 +645,15 @@ public class MainActivity extends Activity {
         return false;
     }
 
-    public void adapterCall(String roomId){
-        connectToRoom(roomId, false, false, false, 0);
-    }
-
     public void updateAdapter(){
         if(frAdapter != null){
             frAdapter.notifyDataSetChanged();
         }
+    }
+
+    void contactNameSet(String contactName) {
+        EditText contact = findViewById(R.id.contact_name_call);
+        contact.setText(contactName);
     }
 
     private void saveJson(){
@@ -660,11 +721,31 @@ public class MainActivity extends Activity {
     }
 
     public void onBackPressed(){
-        if(System.currentTimeMillis() - endTime >= 2000){
-            endTime = System.currentTimeMillis();
-            Toast.makeText(this, R.string.end_app, Toast.LENGTH_SHORT).show();
-        }else if(System.currentTimeMillis() - endTime < 2000){
-            super.onBackPressed();
+        if(isBottomCollapsed) {
+            if (System.currentTimeMillis() - endTime >= 2000) {
+                endTime = System.currentTimeMillis();
+                Toast.makeText(this, R.string.end_app, Toast.LENGTH_SHORT).show();
+            } else if (System.currentTimeMillis() - endTime < 2000) {
+                super.onBackPressed();
+            }
+        } else {
+            if(selectRecentFragment.isSub) {
+                selectRecentFragment.backSub();
+            } else {
+                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                isBottomCollapsed = true;
+            }
         }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            if(!isBottomCollapsed)
+                selectRecentFragment.backSub();
+            return true;
+        }// If we got here, the user's action was not recognized.
+        // Invoke the superclass to handle it.
+        return super.onOptionsItemSelected(item);
     }
 }

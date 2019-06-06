@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/recent_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#eeeeee">
@@ -8,15 +9,26 @@
         android:id="@+id/toolbarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true">
+        android:layout_alignParentTop="true"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
 
         <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+            android:id="@+id/recent_toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="?attr/colorPrimary"
+            android:background="@drawable/bottom_sheet_bar_collaps"
             android:minHeight="?attr/actionBarSize"
             android:theme="?attr/actionBarTheme" />
+
+        <TextView
+            android:id="@+id/barCollaps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|top"
+            android:layout_marginTop="7dp"
+            android:textColor="@android:color/white"
+            android:textSize="16dp" />
 
         <TextView
             android:id="@+id/barTitle"
@@ -25,13 +37,6 @@
             android:layout_gravity="center"
             android:textSize="18sp" />
 
-        <TextView
-            android:id="@+id/barSubTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center"
-            android:layout_marginBottom="3dp"
-            android:textColor="@android:color/darker_gray" />
     </FrameLayout>
 
     <LinearLayout

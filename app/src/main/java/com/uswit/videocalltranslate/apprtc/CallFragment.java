@@ -85,7 +85,7 @@ public class CallFragment extends Fragment {
       boolean enabled = callEvents.onToggleMic();
       toggleMuteButton.setAlpha(enabled ? 1.0f : 0.3f);
 
-      if(enabled) {
+      if(!enabled) {
         Log.e("onClick", "스탑!");
         ((CallActivity)getActivity()).stopVoiceRecorder();
       } else {

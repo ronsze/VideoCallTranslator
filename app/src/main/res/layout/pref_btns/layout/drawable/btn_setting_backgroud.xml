@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="#eeeeee">
+    <item android:drawable="@drawable/ic_settings_24dp">
+        <shape>
+            <solid android:color="#eeeeee"/>
+        </shape>
+    </item>
+</ripple>

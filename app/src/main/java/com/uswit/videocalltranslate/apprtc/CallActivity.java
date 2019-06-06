@@ -10,6 +10,8 @@
 
 package com.uswit.videocalltranslate.apprtc;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -29,13 +31,17 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.text.TextUtils;
+import android.transition.Explode;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.view.animation.AccelerateInterpolator;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -222,7 +228,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
     private boolean isConnected = false;
     private String connTime;
-    private String value;
+    private String value = "";
     private String lang;
 
     private VoiceRecorder mVoiceRecorder;
@@ -276,6 +282,15 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         }
     };
 
+
+    public static final String EXTRA_CIRCULAR_REVEAL_X = "EXTRA_CIRCULAR_REVEAL_X";
+    public static final String EXTRA_CIRCULAR_REVEAL_Y = "EXTRA_CIRCULAR_REVEAL_Y";
+
+    View rootLayout;
+
+    private int revealX;
+    private int revealY;
+
     @Override
     // TODO(bugs.webrtc.org/8580): LayoutParams.FLAG_TURN_SCREEN_ON and
     // LayoutParams.FLAG_SHOW_WHEN_LOCKED are deprecated.
@@ -283,7 +298,6 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         super.onCreate(savedInstanceState);
         Thread.setDefaultUncaughtExceptionHandler(new UnhandledExceptionHandler(this));
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         // Set window styles for fullscreen-window size. Needs to be done before
         // adding content.
@@ -349,7 +363,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             if (checkCallingOrSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
                 logAndToast("Permission " + permission + " is not granted");
                 setResult(RESULT_CANCELED);
-                finish();
+                unRevealActivity();
                 return;
             }
         }
@@ -359,7 +373,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logAndToast(getString(R.string.missing_url));
             Log.e(TAG, "Didn't get any URL in intent!");
             setResult(RESULT_CANCELED);
-            finish();
+            unRevealActivity();
             return;
         }
 
@@ -370,7 +384,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             logAndToast(getString(R.string.missing_url));
             Log.e(TAG, "Incorrect room ID in intent!");
             setResult(RESULT_CANCELED);
-            finish();
+            unRevealActivity();
             return;
         }
 
@@ -481,6 +495,60 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
         DrawerLayout drawerLayout = findViewById(R.id.drawer);
         drawerLayout.setScrimColor(getResources().getColor(android.R.color.transparent));
+
+        rootLayout = drawerLayout;
+
+        if (savedInstanceState == null && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_X) && intent.hasExtra(EXTRA_CIRCULAR_REVEAL_Y)) {
+            rootLayout.setVisibility(View.INVISIBLE);
+
+            revealX = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_X, 0);
+            revealY = intent.getIntExtra(EXTRA_CIRCULAR_REVEAL_Y, 0);
+
+
+            ViewTreeObserver viewTreeObserver = rootLayout.getViewTreeObserver();
+            if (viewTreeObserver.isAlive()) {
+                viewTreeObserver.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        revealActivity(revealX, revealY);
+                        rootLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
+            }
+        } else {
+            rootLayout.setVisibility(View.VISIBLE);
+        }
+    }
+
+    protected void revealActivity(int x, int y) {
+        float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
+
+        // create the animator for this view (the start radius is zero)
+        Animator circularReveal = ViewAnimationUtils.createCircularReveal(rootLayout, x, y, 0, finalRadius);
+        circularReveal.setDuration(400);
+        circularReveal.setInterpolator(new AccelerateInterpolator());
+
+        // make the view visible and start the animation
+        rootLayout.setVisibility(View.VISIBLE);
+        circularReveal.start();
+    }
+
+    protected void unRevealActivity() {
+        float finalRadius = (float) (Math.max(rootLayout.getWidth(), rootLayout.getHeight()) * 1.1);
+        Animator circularReveal = ViewAnimationUtils.createCircularReveal(
+                rootLayout, revealX, revealY, finalRadius, 0);
+
+        circularReveal.setDuration(400);
+        circularReveal.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                rootLayout.setVisibility(View.INVISIBLE);
+                finish();
+                overridePendingTransition(R.anim.not_move_activity,R.anim.rightout_activity);
+            }
+        });
+
+        circularReveal.start();
     }
 
     @TargetApi(17)
@@ -772,7 +840,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
                 saveRecent();
 
-                finish();
+                unRevealActivity();
                 dialog.dismiss();     //닫기
             });
 
@@ -782,7 +850,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
                 saveRecent();
 
-                finish();
+                unRevealActivity();
                 dialog.dismiss();     //닫기
             });
 
@@ -791,7 +859,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 
                     saveRecent();
 
-                    finish();
+                    unRevealActivity();
                     dialog.dismiss();
                     return true;
                 }
@@ -801,7 +869,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
 // 창 띄우기
             ad.show();
         } else {
-            finish();
+            unRevealActivity();
         }
     }
 
@@ -1197,6 +1265,11 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                 }
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        unRevealActivity();
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ

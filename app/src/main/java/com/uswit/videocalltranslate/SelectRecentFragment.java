@@ -1,24 +1,27 @@
 package com.uswit.videocalltranslate;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,11 +29,9 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Objects;
 
-public class SelectRecentActivity extends AppCompatActivity {
-
-    @SuppressLint("StaticFieldLeak")
-    public static Activity selectRecentActivity;
+public class SelectRecentFragment extends Fragment {
 
     private Animation translateLeftAnim;
     private Animation translateRightAnim;
@@ -63,63 +64,74 @@ public class SelectRecentActivity extends AppCompatActivity {
     };
 
     private ActionBar actionBar;
-    Context context;
+    private Context context;
 
     private LinearLayout roomLayout;
     private LinearLayout subLayout;
     private RecyclerView recyclerSubView;
-    private boolean isSub = false;
+    boolean isSub = false;
 
+    private TextView barCollaps;
     private TextView barTitle;
     private String selectedRoomName;
     private String selectedFileName;
-    ArrayList<String> subfName;
+    private ArrayList<String> subfName;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_select_recent);
+    public View onCreateView(
+            LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View controlView = inflater.inflate(R.layout.fragment_select_recent, container, false);
 
-        selectRecentActivity = SelectRecentActivity.this;
-        context = this.getApplicationContext();
+        context = this.getContext();
 
-        barTitle = findViewById(R.id.barTitle);
-        barTitle.setText("Select Room Name");
+        RelativeLayout layout = controlView.findViewById(R.id.recent_layout);
+        Resources resources = context.getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        int width = metrics.widthPixels;
+        int height = metrics.heightPixels;
+        float px = 250 * (metrics.densityDpi / 160f);
+        RelativeLayout.LayoutParams parms = new RelativeLayout.LayoutParams(width,(int)(height-px));
+        layout.setLayoutParams(parms);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        barCollaps = controlView.findViewById(R.id.barCollaps);
+        barTitle = controlView.findViewById(R.id.barTitle);
 
-        actionBar = getSupportActionBar();
+        Toolbar toolbar = controlView.findViewById(R.id.recent_toolbar);
+        ((MainActivity) Objects.requireNonNull(getActivity())).setSupportActionBar(toolbar);
+
+        actionBar = ((MainActivity) Objects.requireNonNull(getActivity())).getSupportActionBar();
         assert actionBar != null;
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(false);
 
-        RecyclerView recyclerView = findViewById(R.id.recycler_view);
-        recyclerSubView = findViewById(R.id.recycler_view_sub);
+        RecyclerView recyclerView = controlView.findViewById(R.id.recycler_view);
+        recyclerSubView = controlView.findViewById(R.id.recycler_view_sub);
 
-        translateLeftAnim = AnimationUtils.loadAnimation(this, R.anim.translate_left);
-        translateRightAnim = AnimationUtils.loadAnimation(this, R.anim.translate_right);
-        translateLeftAnim_sub = AnimationUtils.loadAnimation(this, R.anim.sub_translate_left);
-        translateRightAnim_sub = AnimationUtils.loadAnimation(this, R.anim.sub_translate_right);
+        translateLeftAnim = AnimationUtils.loadAnimation(context, R.anim.translate_left);
+        translateRightAnim = AnimationUtils.loadAnimation(context, R.anim.translate_right);
+        translateLeftAnim_sub = AnimationUtils.loadAnimation(context, R.anim.sub_translate_left);
+        translateRightAnim_sub = AnimationUtils.loadAnimation(context, R.anim.sub_translate_right);
 
         translateLeftAnim_sub.setAnimationListener(animationListener);
         translateRightAnim_sub.setAnimationListener(animationListener);
 
-        roomLayout = findViewById(R.id.roomLayout);
-        subLayout = findViewById(R.id.subLayout);
+        roomLayout = controlView.findViewById(R.id.roomLayout);
+        subLayout = controlView.findViewById(R.id.subLayout);
 
         recyclerView.setHasFixedSize(true);
         recyclerSubView.setHasFixedSize(true);
 
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(context);
         recyclerView.setLayoutManager(layoutManager);
 
-        RecyclerView.LayoutManager subLayoutManager = new LinearLayoutManager(this);
+        RecyclerView.LayoutManager subLayoutManager = new LinearLayoutManager(context);
         recyclerSubView.setLayoutManager(subLayoutManager);
 
+        collapsTitle(((MainActivity) Objects.requireNonNull(getActivity())).isBottomCollapsed);
+
         ArrayList<String> fName = new ArrayList<>();
-        File files = new File(this.getApplicationContext().getExternalFilesDir(null), "chat");
+        File files = new File(context.getExternalFilesDir(null), "chat");
 
         String[] textSet = null;
 
@@ -134,18 +146,18 @@ public class SelectRecentActivity extends AppCompatActivity {
                 recyclerView.setAdapter(adapter);
             } else {
                 roomLayout.setVisibility(View.GONE);
-                TextView norecent = findViewById(R.id.txt_norecent);
+                TextView norecent = controlView.findViewById(R.id.txt_norecent);
                 norecent.setVisibility(View.VISIBLE);
             }
         } else {
             roomLayout.setVisibility(View.GONE);
-            TextView norecent = findViewById(R.id.txt_norecent);
+            TextView norecent = controlView.findViewById(R.id.txt_norecent);
             norecent.setVisibility(View.VISIBLE);
         }
 
         subfName = new ArrayList<>();
         String[] finalTextSet = textSet;
-        recyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), recyclerView, new RecyclerTouchListener.ClickListener() {
+        recyclerView.addOnItemTouchListener(new RecyclerTouchListener(context.getApplicationContext(), recyclerView, new RecyclerTouchListener.ClickListener() {
             @SuppressLint("SimpleDateFormat")
             @Override
             public void onClick(View view, int position) {
@@ -188,7 +200,7 @@ public class SelectRecentActivity extends AppCompatActivity {
                                     else name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15)));
                                     data.add('D' + name);
                                 } catch (ParseException e) {
-                                    Log.e("SelectRecentActivity", e.toString());
+                                    Log.e("SelectRecentFragment", e.toString());
                                 }
                                 index++;
                             }
@@ -219,7 +231,7 @@ public class SelectRecentActivity extends AppCompatActivity {
             }
         }));
 
-        recyclerSubView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), recyclerSubView, new RecyclerTouchListener.ClickListener() {
+        recyclerSubView.addOnItemTouchListener(new RecyclerTouchListener(context.getApplicationContext(), recyclerSubView, new RecyclerTouchListener.ClickListener() {
             @SuppressLint("SimpleDateFormat")
             @Override
             public void onClick(View view, int position) {
@@ -248,7 +260,17 @@ public class SelectRecentActivity extends AppCompatActivity {
                     intent.putExtra("date", date);
                     intent.putExtra("fileDir", fileDir);
 
-                    context.startActivity(intent);
+                    new Handler().postDelayed(() -> {
+                        ActivityOptionsCompat options = ActivityOptionsCompat.
+                                makeSceneTransitionAnimation(Objects.requireNonNull(getActivity()), view, "transition");
+                        int revealX = (int) (view.getX() + view.getWidth() / 2);
+                        int revealY = (int) (view.getY() + (300 * (metrics.densityDpi / 160f)));
+
+                        intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
+                        intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+
+                        context.startActivity(intent, options.toBundle());
+                    }, 200);
                 }
             }
 
@@ -257,42 +279,26 @@ public class SelectRecentActivity extends AppCompatActivity {
 
             }
         }));
+
+        return controlView;
     }
 
-    @Override
-    public void onBackPressed() {
-        if(isSub) {
-            roomLayout.startAnimation(translateRightAnim);
-            roomLayout.setVisibility(View.VISIBLE);
-            subLayout.startAnimation(translateRightAnim_sub);
-            subLayout.setVisibility(View.GONE);
-
-            isSub = false;
-        } else super.onBackPressed();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.recent_menu, menu);
-
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-
-            case R.id.action_close:
-                finish();
-                return true;
-
-            default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
-                return super.onOptionsItemSelected(item);
+    void collapsTitle(boolean toggle) {
+        if(toggle) {
+            barCollaps.setText(R.string.chat_record);
+            barTitle.setText("");
+        } else {
+            barCollaps.setText("");
+            barTitle.setText("Select Room Name");
         }
+    }
+
+    void backSub() {
+        roomLayout.startAnimation(translateRightAnim);
+        roomLayout.setVisibility(View.VISIBLE);
+        subLayout.startAnimation(translateRightAnim_sub);
+        subLayout.setVisibility(View.GONE);
+
+        isSub = false;
     }
 }

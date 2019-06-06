@@ -1,14 +1,17 @@
 package com.uswit.videocalltranslate;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.provider.Settings;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -17,10 +20,15 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class SettingActivity extends PreferenceActivity implements Preference.OnPreferenceClickListener{
+
+    static Activity activity;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         addPreferencesFromResource(R.xml.setting);
+
+        activity = this;
 
         Preference delete_all_records =findPreference("delete_all");
         Preference select_language = findPreference("select_language");
@@ -64,8 +72,6 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
     }
 
     public void onBackPressed(){
-        MainActivity.activity.finish();
-        startActivity(new Intent(SettingActivity.this, MainActivity.class));
         finish();
     }
 }

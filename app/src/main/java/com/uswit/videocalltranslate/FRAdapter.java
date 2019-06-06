@@ -130,7 +130,7 @@ public class FRAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
                 fTextView.setEnabled(false);
-                ((MainActivity)MainActivity.context).adapterCall(items.get(position).roomId);
+                ((MainActivity)MainActivity.context).contactNameSet(items.get(position).roomId);
                 ((MainActivity)MainActivity.context).updateAdapter();
                 fTextView.setEnabled(true);
             }
