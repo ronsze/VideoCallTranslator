@@ -242,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
         settingBtn.setOnClickListener(view -> {
             Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
             startActivity(setIntent);
+            finish();
         });
     }
 

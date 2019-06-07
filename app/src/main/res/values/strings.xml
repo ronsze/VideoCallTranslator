@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">바이챗</string>
+    <string name="app_name">ViChat</string>
     <string name="select_lang">언어 선택</string>
     <string name="btn_next">다음</string>
     <string name="input_name">이름 입력</string>

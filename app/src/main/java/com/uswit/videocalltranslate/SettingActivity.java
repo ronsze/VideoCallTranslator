@@ -72,6 +72,7 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
     }
 
     public void onBackPressed(){
+        startActivity(new Intent(SettingActivity.this, MainActivity.class));
         finish();
     }
 }

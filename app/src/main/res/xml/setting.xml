@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="@string/setting">
+    <PreferenceCategory
+        android:layout="@layout/custum_category">
 
         <Preference
             android:key="select_language"
