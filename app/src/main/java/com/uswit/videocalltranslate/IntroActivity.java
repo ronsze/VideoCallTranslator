@@ -119,17 +119,11 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     void finishAndStart() {
-        if(isChanged) {
-
             //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
             Intent intent = new Intent(IntroActivity.this, MainActivity.class);
             startActivity(intent);
             SettingActivity.activity.finish();
             finish();
-
-        } else {
-            finish();
-        }
     }
 
     public void onBackPressed(){
