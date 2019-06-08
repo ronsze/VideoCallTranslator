@@ -46,7 +46,6 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
             Intent lang_Intent = new Intent(SettingActivity.this, IntroActivity.class);
             lang_Intent.putExtra("isSet", true);
             startActivity(lang_Intent);
-            finish();
         }
         return false;
     }
@@ -72,7 +71,6 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
     }
 
     public void onBackPressed(){
-        startActivity(new Intent(SettingActivity.this, MainActivity.class));
         finish();
     }
 }

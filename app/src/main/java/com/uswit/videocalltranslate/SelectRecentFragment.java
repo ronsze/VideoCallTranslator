@@ -4,11 +4,13 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -18,12 +20,16 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityOptionsCompat;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.loopeer.itemtouchhelperextension.ItemTouchHelperExtension;
 
 import java.io.File;
 import java.text.ParseException;
@@ -63,23 +69,117 @@ public class SelectRecentFragment extends Fragment {
         }
     };
 
-    private ActionBar actionBar;
+    ActionBar actionBar;
     private Context context;
 
     private LinearLayout roomLayout;
     private LinearLayout subLayout;
+    private RecyclerView recyclerView;
     private RecyclerView recyclerSubView;
     boolean isSub = false;
 
+    private TextView norecent;
     private TextView barCollaps;
     private TextView barTitle;
     private String selectedRoomName;
     private String selectedFileName;
+
+    private File files;
+    private ArrayList<String> fName;
     private ArrayList<String> subfName;
+
+    private RecentAdapter subAdapter;
+
+    private ItemTouchHelperCallback mCallback;
+    private ItemTouchHelperExtension mItemTouchHelper;
+
+    private final RecentAdapter.Callback mAdapterCallback = new RecentAdapter.Callback() {
+        @SuppressLint("SimpleDateFormat")
+        @Override
+        public void onFileSelect(View view, int position) {
+            selectedFileName = subfName.get(position);
+
+            String fileDir = files + "/" + selectedRoomName + "/" + selectedFileName;
+
+            Intent intent = new Intent(context, ChatActivity.class);
+
+            String recentName;
+            if(selectedFileName.length() > 15)
+                recentName = selectedFileName.substring(16);
+            else
+                recentName = "no_name";
+
+            String date = "";
+            try {
+                date = new SimpleDateFormat("yyyy.MM.dd. HH:mm:ss").format(new SimpleDateFormat("yyyyMMdd_HHmmss").parse(selectedFileName.substring(0, 15)));
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            intent.putExtra("recentName", recentName);
+            intent.putExtra("roomName", selectedRoomName);
+            intent.putExtra("date", date);
+            intent.putExtra("fileDir", fileDir);
+
+            new Handler().postDelayed(() -> {
+                ActivityOptionsCompat options = ActivityOptionsCompat.
+                        makeSceneTransitionAnimation(Objects.requireNonNull(getActivity()), view, "transition");
+                int revealX = (int) (view.getX() + view.getWidth() / 2);
+                int revealY = (int) (view.getY() + view.getWidth() / 2);
+
+                intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
+                intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+
+                context.startActivity(intent, options.toBundle());
+            }, 200);
+        }
+
+        @Override
+        public void onDeleteClick(View view, int position) {
+            selectedFileName = subfName.get(position);
+
+            String fileDir = files + "/" + selectedRoomName + "/" + selectedFileName;
+            File f = new File(fileDir);
+            if(f.delete()) {
+                if(subfName.get(position - 1).equals("date")) {
+                    if(subfName.size() > 2) {
+                        if(position + 1 < subfName.size()) {
+                            if(subfName.get(position + 1).equals("date")) {
+                                --position;
+                                subfName.remove(position);
+                                subAdapter.doRemove(position);
+                            }
+                        }
+                    } else {
+                        --position;
+                        subfName.remove(position);
+                        subAdapter.doRemove(position);
+                    }
+                }
+
+                subfName.remove(position);
+                subAdapter.doRemove(position);
+
+                if(subfName.size() == 0) {
+                    fileDir = files + "/" + selectedRoomName;
+                    f = new File(fileDir);
+                    if(f.delete()) {
+                        fName.remove(selectedRoomName);
+
+                        backSub();
+                    } else {
+                        Toast.makeText(context, "Delete file failed: " + selectedRoomName, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                Toast.makeText(context, "Delete file failed: " + selectedFileName, Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
 
     @Override
     public View onCreateView(
-            LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View controlView = inflater.inflate(R.layout.fragment_select_recent, container, false);
 
         context = this.getContext();
@@ -99,13 +199,15 @@ public class SelectRecentFragment extends Fragment {
         Toolbar toolbar = controlView.findViewById(R.id.recent_toolbar);
         ((MainActivity) Objects.requireNonNull(getActivity())).setSupportActionBar(toolbar);
 
+        norecent = controlView.findViewById(R.id.txt_norecent);
+
         actionBar = ((MainActivity) Objects.requireNonNull(getActivity())).getSupportActionBar();
         assert actionBar != null;
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(false);
 
-        RecyclerView recyclerView = controlView.findViewById(R.id.recycler_view);
+        recyclerView = controlView.findViewById(R.id.recycler_view);
         recyclerSubView = controlView.findViewById(R.id.recycler_view_sub);
 
         translateLeftAnim = AnimationUtils.loadAnimation(context, R.anim.translate_left);
@@ -130,147 +232,22 @@ public class SelectRecentFragment extends Fragment {
 
         collapsTitle(((MainActivity) Objects.requireNonNull(getActivity())).isBottomCollapsed);
 
-        ArrayList<String> fName = new ArrayList<>();
-        File files = new File(context.getExternalFilesDir(null), "chat");
+        fName = new ArrayList<>();
+        files = new File(context.getExternalFilesDir(null), "chat");
 
-        String[] textSet = null;
-
-        if (files.exists()) {
-            if (files.listFiles().length > 0) {
-                for (File file : files.listFiles()) {
-                    fName.add(file.getName());
-                }
-
-                textSet = fName.toArray(new String[fName.size()]);
-                RecyclerView.Adapter adapter = new RecentAdapter(textSet, false);
-                recyclerView.setAdapter(adapter);
-            } else {
-                roomLayout.setVisibility(View.GONE);
-                TextView norecent = controlView.findViewById(R.id.txt_norecent);
-                norecent.setVisibility(View.VISIBLE);
-            }
-        } else {
-            roomLayout.setVisibility(View.GONE);
-            TextView norecent = controlView.findViewById(R.id.txt_norecent);
-            norecent.setVisibility(View.VISIBLE);
-        }
+        open();
 
         subfName = new ArrayList<>();
-        String[] finalTextSet = textSet;
         recyclerView.addOnItemTouchListener(new RecyclerTouchListener(context.getApplicationContext(), recyclerView, new RecyclerTouchListener.ClickListener() {
             @SuppressLint("SimpleDateFormat")
             @Override
             public void onClick(View view, int position) {
                 if(!isSub) {
-                    if(finalTextSet != null) {
-                        subfName.clear();
-                        ArrayList<String> data = new ArrayList<>();
-                        selectedRoomName = finalTextSet[position];
-                        File subFiles = new File(files, selectedRoomName);
+                    if(!fName.isEmpty()) {
+                        selectedRoomName = fName.get(position);
 
-                        String[] textSet;
-                        String prevDate = "";
-                        if (subFiles.listFiles().length > 0) {
-                            for (File file : subFiles.listFiles()) {
-                                subfName.add(file.getName());
-                            }
-
-                            subfName.sort((o1, o2) -> {
-                                try {
-                                    return ((new SimpleDateFormat("yyyyMMdd_HHmmss").parse(o1.substring(0, 15)).getTime()) <= (new SimpleDateFormat("yyyyMMdd_HHmmss").parse(o2.substring(0, 15)).getTime())) ? 1 : -1;
-                                } catch (ParseException e) {
-                                    e.printStackTrace();
-                                }
-                                return 0;
-                            });
-
-                            ArrayList<String> temp = new ArrayList<>(subfName);
-                            int index = 0;
-                            for(String file : temp) {
-                                String date = file.substring(0, 8);
-                                try {
-                                    if(!date.equals(prevDate)) {
-                                        data.add('T' + new SimpleDateFormat("yyyy.MM.dd.").format(new SimpleDateFormat("yyyyMMdd").parse(date)));
-                                        prevDate = date;
-                                        subfName.add(index, "date");
-                                        index++;
-                                    }
-                                    String name;
-                                    if (file.length() > 15) name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15))) + "_" + file.substring(16);
-                                    else name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15)));
-                                    data.add('D' + name);
-                                } catch (ParseException e) {
-                                    Log.e("SelectRecentFragment", e.toString());
-                                }
-                                index++;
-                            }
-
-                            textSet = data.toArray(new String[data.size()]);
-                            RecyclerView.Adapter subAdapter = new RecentAdapter(textSet, true);
-
-                            recyclerSubView.setAdapter(subAdapter);
-
-                            new Handler().postDelayed(() -> {
-                                roomLayout.startAnimation(translateLeftAnim);
-                                roomLayout.setVisibility(View.GONE);
-                                subLayout.startAnimation(translateLeftAnim_sub);
-                                subLayout.setVisibility(View.VISIBLE);
-                            }, 200);
-
-                            isSub = true;
-                        } else {
-                            Toast.makeText(context, "No Recent", Toast.LENGTH_SHORT).show();
-                        }
+                        subOpen();
                     }
-                }
-            }
-
-            @Override
-            public void onLongClick(View view, int position) {
-
-            }
-        }));
-
-        recyclerSubView.addOnItemTouchListener(new RecyclerTouchListener(context.getApplicationContext(), recyclerSubView, new RecyclerTouchListener.ClickListener() {
-            @SuppressLint("SimpleDateFormat")
-            @Override
-            public void onClick(View view, int position) {
-                if(!subfName.get(position).equals("date")) {
-                    selectedFileName = subfName.get(position);
-
-                    String fileDir = files + "/" + selectedRoomName + "/" + selectedFileName;
-
-                    Intent intent = new Intent(context, ChatActivity.class);
-
-                    String recentName;
-                    if(selectedFileName.length() > 15)
-                        recentName = selectedFileName.substring(16);
-                    else
-                        recentName = "no_name";
-
-                    String date = "";
-                    try {
-                        date = new SimpleDateFormat("yyyy.MM.dd. HH:mm:ss").format(new SimpleDateFormat("yyyyMMdd_HHmmss").parse(selectedFileName.substring(0, 15)));
-                    } catch (ParseException e) {
-                        e.printStackTrace();
-                    }
-
-                    intent.putExtra("recentName", recentName);
-                    intent.putExtra("roomName", selectedRoomName);
-                    intent.putExtra("date", date);
-                    intent.putExtra("fileDir", fileDir);
-
-                    new Handler().postDelayed(() -> {
-                        ActivityOptionsCompat options = ActivityOptionsCompat.
-                                makeSceneTransitionAnimation(Objects.requireNonNull(getActivity()), view, "transition");
-                        int revealX = (int) (view.getX() + view.getWidth() / 2);
-                        int revealY = (int) (view.getY() + (300 * (metrics.densityDpi / 160f)));
-
-                        intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
-                        intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
-
-                        context.startActivity(intent, options.toBundle());
-                    }, 200);
                 }
             }
 
@@ -289,7 +266,10 @@ public class SelectRecentFragment extends Fragment {
             barTitle.setText("");
         } else {
             barCollaps.setText("");
-            barTitle.setText("Select Room Name");
+            if(isSub)
+                barTitle.setText(selectedRoomName);
+            else
+                barTitle.setText("Select Room Name");
         }
     }
 
@@ -300,5 +280,143 @@ public class SelectRecentFragment extends Fragment {
         subLayout.setVisibility(View.GONE);
 
         isSub = false;
+
+        refresh();
+    }
+
+    void refresh() {
+        if(isSub) {
+            if(subfName.size() == 0)
+                backSub();
+            else {
+                subOpen();
+            }
+        } else {
+            open();
+        }
+    }
+
+    private void open() {
+        fName.clear();
+
+        if (files.exists()) {
+            if (files.listFiles().length > 0) {
+                for (File file : files.listFiles()) {
+                    fName.add(file.getName());
+                }
+
+                RecyclerView.Adapter adapter = new RecentAdapter(fName, false);
+                recyclerView.setAdapter(adapter);
+            } else {
+                roomLayout.setVisibility(View.GONE);
+                norecent.setVisibility(View.VISIBLE);
+            }
+        } else {
+            roomLayout.setVisibility(View.GONE);
+            norecent.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @SuppressLint("SimpleDateFormat")
+    private void subOpen() {
+        subfName.clear();
+
+        ArrayList<String> data = new ArrayList<>();
+        File subFiles = new File(files, selectedRoomName);
+
+        String prevDate = "";
+        if (subFiles.listFiles().length > 0) {
+            for (File file : subFiles.listFiles()) {
+                subfName.add(file.getName());
+            }
+
+            subfName.sort((o1, o2) -> {
+                try {
+                    return ((new SimpleDateFormat("yyyyMMdd_HHmmss").parse(o1.substring(0, 15)).getTime()) <= (new SimpleDateFormat("yyyyMMdd_HHmmss").parse(o2.substring(0, 15)).getTime())) ? 1 : -1;
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                return 0;
+            });
+
+            ArrayList<String> temp = new ArrayList<>(subfName);
+            int index = 0;
+            for(String file : temp) {
+                String date = file.substring(0, 8);
+                try {
+                    if(!date.equals(prevDate)) {
+                        data.add('T' + new SimpleDateFormat("yyyy.MM.dd.").format(new SimpleDateFormat("yyyyMMdd").parse(date)));
+                        prevDate = date;
+                        subfName.add(index, "date");
+                        index++;
+                    }
+                    String name;
+                    if (file.length() > 15) name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15))) + "_" + file.substring(16);
+                    else name = new SimpleDateFormat("HH:mm:ss").format(new SimpleDateFormat("HHmmss").parse(file.substring(9, 15)));
+                    data.add('D' + name);
+                } catch (ParseException e) {
+                    Log.e("SelectRecentFragment", e.toString());
+                }
+                index++;
+            }
+
+            subAdapter = new RecentAdapter(data, true, mAdapterCallback);
+
+            recyclerSubView.setAdapter(subAdapter);
+
+            mCallback = new ItemTouchHelperCallback();
+            mItemTouchHelper = new ItemTouchHelperExtension(mCallback);
+            mItemTouchHelper.attachToRecyclerView(recyclerSubView);
+
+            if(!isSub) {
+                new Handler().postDelayed(() -> {
+                    roomLayout.startAnimation(translateLeftAnim);
+                    roomLayout.setVisibility(View.GONE);
+                    subLayout.startAnimation(translateLeftAnim_sub);
+                    subLayout.setVisibility(View.VISIBLE);
+                }, 200);
+
+                isSub = true;
+            }
+        } else {
+            if(isSub) {
+                String fileDir = files + "/" + selectedRoomName;
+                File f = new File(fileDir);
+                if(f.delete()) {
+                    fName.remove(selectedRoomName);
+
+                    backSub();
+                } else {
+                    Toast.makeText(context, "Delete file failed: " + selectedRoomName, Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+    public class ItemTouchHelperCallback extends ItemTouchHelperExtension.Callback {
+
+        @Override
+        public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+            return makeMovementFlags(0, ItemTouchHelper.START);
+        }
+
+        @Override
+        public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public void onSwiped(RecyclerView.ViewHolder viewHolder, int i) {
+
+        }
+
+        @Override
+        public void onChildDraw(Canvas c, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, boolean isCurrentlyActive) {
+            RecentAdapter.MyViewHolder holder = (RecentAdapter.MyViewHolder) viewHolder;
+            if (dX < -holder.mActionContainer.getWidth()) {
+                dX = -holder.mActionContainer.getWidth();
+            }
+            holder.mViewContent.setTranslationX(dX);
+        }
     }
 }

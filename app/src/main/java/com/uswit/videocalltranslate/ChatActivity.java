@@ -3,6 +3,7 @@ package com.uswit.videocalltranslate;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.uswit.videocalltranslate.apprtc.AdapterContent;
+import com.uswit.videocalltranslate.apprtc.CallActivity;
 import com.uswit.videocalltranslate.apprtc.CustomAdapter;
 
 import java.io.File;
@@ -41,6 +43,8 @@ public class ChatActivity extends AppCompatActivity {
     private int revealX;
     private int revealY;
 
+    private String fileDir;
+
     @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +57,7 @@ public class ChatActivity extends AppCompatActivity {
         String recentName = intent.getStringExtra("recentName");
         String roomName = intent.getStringExtra("roomName");
         String date = intent.getStringExtra("date");
-        String fileDir = intent.getStringExtra("fileDir");
+        fileDir = intent.getStringExtra("fileDir");
 
         rootLayout = findViewById(R.id.chat_layout);
 
@@ -90,7 +94,8 @@ public class ChatActivity extends AppCompatActivity {
         assert actionBar != null;
         actionBar.setDisplayShowCustomEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
-        actionBar.setDisplayHomeAsUpEnabled(false);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setHomeAsUpIndicator(R.drawable.ic_close_black_24dp);
 
         StringBuilder data = new StringBuilder();
 
@@ -171,19 +176,43 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.recent_menu, menu);
+        getMenuInflater().inflate(R.menu.chat_menu, menu);
 
         return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_close) {
-            unRevealActivity();
-            return true;
-        }// If we got here, the user's action was not recognized.
-        // Invoke the superclass to handle it.
-        return super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                unRevealActivity();
+                return true;
+
+            case R.id.delete:
+                AlertDialog.Builder ad = new AlertDialog.Builder(ChatActivity.this);
+
+                ad.setTitle("Chatting recent delete...");       // 제목 설정
+                ad.setMessage("Do you really want to delete this?");   // 내용 설정
+
+                ad.setPositiveButton("Yes", (dialog, which) -> {
+                    File f = new File(fileDir);
+                    if(f.delete()) {
+                        Toast.makeText(ChatActivity.this, "Delete Success", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        Toast.makeText(ChatActivity.this, "Delete file failed", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                ad.setNegativeButton("No", (dialog, which) -> {
+
+                });
+
+                ad.show();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

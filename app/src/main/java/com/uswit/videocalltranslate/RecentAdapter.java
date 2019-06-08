@@ -4,21 +4,39 @@ import android.annotation.SuppressLint;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.loopeer.itemtouchhelperextension.Extension;
+
+import java.util.ArrayList;
+
 public class RecentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final static int TYPE_DATA = 0;
     private final static int TYPE_TIME = 1;
 
-    private String[] textSet;
+    private ArrayList<String> textSet;
     private boolean isSub;
 
-    RecentAdapter(String[] textSet, boolean isSub) {
+    private Callback mCallback;
+
+    RecentAdapter(ArrayList<String> textSet, boolean isSub) {
         this.textSet = textSet;
         this.isSub = isSub;
+    }
+
+    RecentAdapter(ArrayList<String> textSet, boolean isSub, Callback callback) {
+        this.textSet = textSet;
+        this.isSub = isSub;
+        this.mCallback = callback;
+    }
+
+    void doRemove(int position) {
+        textSet.remove(position);
+        notifyItemRemoved(position);
     }
 
     @NonNull
@@ -34,33 +52,43 @@ public class RecentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if(isSub) {
-            if(holder instanceof MyViewHolder)
-                ((MyViewHolder)holder).onBind(textSet[position].substring(1), true);
+            if(holder instanceof MyViewHolder) {
+                ((MyViewHolder)holder).onBind(textSet.get(position).substring(1), true);
+                ((MyViewHolder) holder).mViewContent.setOnClickListener(view -> mCallback.onFileSelect(view, holder.getAdapterPosition()));
+                ((MyViewHolder) holder).mActionContainer.setOnClickListener(view -> mCallback.onDeleteClick(view, holder.getAdapterPosition()));
+            }
             else
-                ((TimeViewHolder)holder).onBind(textSet[position].substring(1));
+                ((TimeViewHolder)holder).onBind(textSet.get(position).substring(1));
         } else {
-            ((MyViewHolder)holder).onBind(textSet[position], false);
+            ((MyViewHolder)holder).onBind(textSet.get(position), false);
         }
     }
 
     @Override
     public int getItemCount() {
-        return textSet.length;
+        return textSet.size();
     }
 
     @Override
     public int getItemViewType(int position) {
         if(isSub) {
-            return textSet[position].charAt(0) == 'D' ? TYPE_DATA : TYPE_TIME;
+            return textSet.get(position).charAt(0) == 'D' ? TYPE_DATA : TYPE_TIME;
         } else {
             return TYPE_DATA;
         }
     }
 
-    class MyViewHolder extends RecyclerView.ViewHolder {
+    public abstract static class Callback {
+        public void onFileSelect(View view, int position) {}
+        public void onDeleteClick(View view, int position) {}
+    }
+
+    class MyViewHolder extends RecyclerView.ViewHolder implements Extension {
         private TextView title;
         private TextView content;
         private TextView time;
+        RelativeLayout mViewContent;
+        RelativeLayout mActionContainer;
 
         MyViewHolder(View view) {
             super(view);
@@ -68,6 +96,8 @@ public class RecentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             this.title = view.findViewById(R.id.txt_title);
             this.content = view.findViewById(R.id.txt_content);
             this.time = view.findViewById(R.id.txt_time);
+            this.mViewContent = view.findViewById(R.id.contentLayout);
+            this.mActionContainer = view.findViewById(R.id.actionLayout);
         }
 
         @SuppressLint({"SetTextI18n"})
@@ -82,6 +112,11 @@ public class RecentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
             } else {
                 content.setText(text);
             }
+        }
+
+        @Override
+        public float getActionWidth() {
+            return mActionContainer.getWidth();
         }
     }
 

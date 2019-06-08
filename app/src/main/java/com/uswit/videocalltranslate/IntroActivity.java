@@ -74,10 +74,13 @@ public class IntroActivity extends AppCompatActivity {
             TextView textView = findViewById(R.id.textView);
             textView.setText(R.string.select_lang);
 
-            Button button = findViewById(R.id.btn_next);
-            button.setText(R.string.btn_next);
-
             isChanged = !isChanged;
+
+            Button button = findViewById(R.id.btn_next);
+            if(isChanged)
+                button.setText(R.string.btn_change);
+            else
+                button.setText(R.string.cancel);
         });
 
         toggleButton_en.setOnClickListener(v -> {
@@ -92,10 +95,13 @@ public class IntroActivity extends AppCompatActivity {
             TextView textView = findViewById(R.id.textView);
             textView.setText(R.string.select_lang);
 
-            Button button = findViewById(R.id.btn_next);
-            button.setText(R.string.btn_next);
-
             isChanged = !isChanged;
+
+            Button button = findViewById(R.id.btn_next);
+            if(isChanged)
+                button.setText(R.string.btn_change);
+            else
+                button.setText(R.string.cancel);
         });
 
         findViewById(R.id.btn_next).setOnClickListener(v -> {
@@ -119,14 +125,20 @@ public class IntroActivity extends AppCompatActivity {
     }
 
     void finishAndStart() {
+        if (isChanged) {
             //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
             Intent intent = new Intent(IntroActivity.this, MainActivity.class);
             startActivity(intent);
+            MainActivity.activity.finish();
             SettingActivity.activity.finish();
             finish();
+            overridePendingTransition(R.anim.not_move_activity,R.anim.rightout_activity);
+        } else {
+            finish();
+        }
     }
 
     public void onBackPressed(){
-        finishAndStart();
+        // Nope Back
     }
 }

@@ -10,13 +10,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
-import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
@@ -34,7 +33,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -48,7 +46,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -63,6 +60,8 @@ public class MainActivity extends AppCompatActivity {
     private BottomSheetBehavior behavior;
 
     String lang;
+
+    private MenuItem refreshItem;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 영상통화
@@ -135,15 +134,17 @@ public class MainActivity extends AppCompatActivity {
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if(BottomSheetBehavior.STATE_EXPANDED == newState) {
                     isBottomCollapsed = false;
-                    if(!selectRecentFragment.isSub) {
-                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
-                        ft.detach(selectRecentFragment).attach(selectRecentFragment).commit();
-                    }
+                    selectRecentFragment.refresh();
+                    refreshItem.setVisible(true);
+                    if(selectRecentFragment.isSub)
+                        selectRecentFragment.actionBar.setDisplayHomeAsUpEnabled(true);
                 } else if(BottomSheetBehavior.STATE_COLLAPSED == newState) {
                     isBottomCollapsed = true;
-                    if(!selectRecentFragment.isSub)
-                        selectRecentFragment.collapsTitle(true);
+                    refreshItem.setVisible(false);
+                    if(selectRecentFragment.isSub)
+                        selectRecentFragment.actionBar.setDisplayHomeAsUpEnabled(false);
                 }
+                selectRecentFragment.collapsTitle(isBottomCollapsed);
             }
 
             @Override
@@ -242,11 +243,19 @@ public class MainActivity extends AppCompatActivity {
         settingBtn.setOnClickListener(view -> {
             Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
             startActivity(setIntent);
-            finish();
         });
     }
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.recent_menu, menu);
+        refreshItem = menu.findItem(R.id.refresh);
+        refreshItem.setVisible(false);
+
+        return super.onCreateOptionsMenu(menu);
+    } // Fragment Menu
 
     @Override
     protected void onStart() {
@@ -263,6 +272,8 @@ public class MainActivity extends AppCompatActivity {
         if(frAdapter.isEmpty()) {
             title.setText(R.string.empty_call_record);
         }
+
+        selectRecentFragment.refresh();
     }
 
     @Override
@@ -614,20 +625,7 @@ public class MainActivity extends AppCompatActivity {
 
             intent.putExtra("lang", lang);
 
-            Resources resources = context.getResources();
-            DisplayMetrics metrics = resources.getDisplayMetrics();
-            int width = metrics.widthPixels;
-            int height = metrics.heightPixels;
-            ActivityOptionsCompat options = ActivityOptionsCompat.
-                    makeSceneTransitionAnimation(this, findViewById(R.id.main_layout), "transition");
-
-            int revealX = (width / 2);
-            int revealY = (height / 2);
-
-            intent.putExtra(CallActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
-            intent.putExtra(CallActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
-
-            startActivityForResult(intent, CONNECTION_REQUEST, options.toBundle());
+            startActivityForResult(intent, CONNECTION_REQUEST);
         }
     }
 
@@ -741,12 +739,17 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            if(!isBottomCollapsed)
-                selectRecentFragment.backSub();
-            return true;
-        }// If we got here, the user's action was not recognized.
-        // Invoke the superclass to handle it.
-        return super.onOptionsItemSelected(item);
-    }
+
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                if(!isBottomCollapsed && selectRecentFragment.isSub)
+                    selectRecentFragment.backSub();
+                return true;
+            case R.id.refresh:
+                selectRecentFragment.refresh();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    } // Fragment Menu
 }

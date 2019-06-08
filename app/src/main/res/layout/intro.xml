@@ -54,7 +54,7 @@
         android:layout_marginEnd="32dp"
         android:layout_marginBottom="16dp"
         android:background="@android:color/holo_blue_bright"
-        android:text="@string/btn_next"
+        android:text="@string/cancel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
