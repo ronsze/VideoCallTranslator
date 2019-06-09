@@ -232,7 +232,6 @@ public class SelectRecentFragment extends Fragment {
         collapsTitle(((MainActivity) Objects.requireNonNull(getActivity())).isBottomCollapsed);
 
         fName = new ArrayList<>();
-        files = new File(context.getExternalFilesDir(null), "chat");
 
         open();
 
@@ -298,6 +297,8 @@ public class SelectRecentFragment extends Fragment {
     private void open() {
         fName.clear();
 
+        files = new File(context.getExternalFilesDir(null), "chat");
+
         if (files.exists()) {
             if (files.listFiles().length > 0) {
                 for (File file : files.listFiles()) {
@@ -306,6 +307,9 @@ public class SelectRecentFragment extends Fragment {
 
                 RecyclerView.Adapter adapter = new RecentAdapter(fName, false);
                 recyclerView.setAdapter(adapter);
+
+                roomLayout.setVisibility(View.VISIBLE);
+                norecent.setVisibility(View.GONE);
             } else {
                 roomLayout.setVisibility(View.GONE);
                 norecent.setVisibility(View.VISIBLE);
