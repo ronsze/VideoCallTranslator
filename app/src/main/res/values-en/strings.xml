@@ -31,13 +31,18 @@
     <string name="chat_record">Chatting Recent</string>
     <string name="end_app">Press the Back button again to exit.</string>
 
+    <string name="transition_room">transition_room</string>
+    <string name="transition_content">transition_content</string>
+    <string name="transition_setting">transition_setting</string>
+    <string name="transition_intro">transition_intro</string>
+
     <!-- 셋팅 -->
     <string name="setting">Setting</string>
     <string name="lang_smr">Choose your preferred language.</string>
     <string name="lang_kr">Korean</string>
     <string name="lang_en">English</string>
-    <string name="delete_all">Delete all record</string>
-    <string name="delete_all_smr">Delete all call records and favorites.</string>
+    <string name="delete_all">Delete all recent</string>
+    <string name="delete_all_smr">Delete all call recent and favorites.</string>
 
     <!-- 영상통화 -->
     <string name="disconnect_call">Disconnect</string>

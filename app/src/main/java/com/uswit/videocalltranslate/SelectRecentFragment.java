@@ -10,7 +10,6 @@ import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -24,6 +23,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.util.Pair;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -122,13 +123,11 @@ public class SelectRecentFragment extends Fragment {
             intent.putExtra("fileDir", fileDir);
 
             new Handler().postDelayed(() -> {
-                ActivityOptionsCompat options = ActivityOptionsCompat.
-                        makeSceneTransitionAnimation(Objects.requireNonNull(getActivity()), view, "transition");
-                int revealX = (int) (view.getX() + view.getWidth() / 2);
-                int revealY = (int) (view.getY() + view.getWidth() / 2);
-
-                intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_X, revealX);
-                intent.putExtra(ChatActivity.EXTRA_CIRCULAR_REVEAL_Y, revealY);
+                View mSquareView1 = barTitle;
+                View mSquareView2 = view.findViewById(R.id.txt_content);
+                Pair participants1 = new Pair<>(mSquareView1, ViewCompat.getTransitionName(mSquareView1));
+                Pair participants2 = new Pair<>(mSquareView2, ViewCompat.getTransitionName(mSquareView2));
+                ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(Objects.requireNonNull(getActivity()), participants1, participants2);
 
                 context.startActivity(intent, options.toBundle());
             }, 200);

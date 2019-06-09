@@ -12,21 +12,22 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
 
-        <activity android:name=".IntroActivity"/>
-
-        <activity android:name=".InputNameActivity" />
-        <activity android:name=".MainActivity" >
+        <activity android:name=".IntroActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".apprtc.CallActivity"
-            android:theme="@style/AppTheme.Transparent"/>
+
+        <activity android:name=".InputNameActivity" />
+        <activity android:name=".MainActivity"/>
+        <activity android:name=".apprtc.CallActivity"/>
         <activity android:name=".ChatActivity"
             android:theme="@style/AppTheme.Transparent"/>
         <activity android:name=".SettingActivity"/>
+        <activity android:name=".IntroSetting"/>
+        <activity android:name=".LanguageActivity"/>
 
         <service android:name=".SpeechService"/>
     </application>

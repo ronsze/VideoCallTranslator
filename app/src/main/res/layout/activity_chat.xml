@@ -25,12 +25,32 @@
             android:layout_gravity="center"
             android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/barTitle"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textSize="18sp" />
+                android:layout_gravity="center">
+
+                <TextView
+                    android:id="@+id/txt_room"
+                    android:transitionName="@string/transition_room"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/barTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" > "
+                    android:textSize="18sp" />
+
+                <TextView
+                    android:id="@+id/txt_content"
+                    android:transitionName="@string/transition_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/barSubTitle"

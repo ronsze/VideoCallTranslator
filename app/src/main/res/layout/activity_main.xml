@@ -5,21 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#eeeeee"
-    android:fitsSystemWindows="true"
     tools:context="com.uswit.videocalltranslate.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="250dp"
-        android:background="@android:color/transparent"
-        android:fitsSystemWindows="true">
+        android:background="@android:color/transparent">
 
-        <com.google.android.material.appbar.CollapsingToolbarLayout
+        <com.uswit.videocalltranslate.CustomCollapsingLayout
             android:id="@+id/toolbar_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fitsSystemWindows="true"
+            android:minHeight="?attr/actionBarSize"
             app:expandedTitleGravity="center"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             app:toolbarId="@id/toolbar">
@@ -28,7 +26,6 @@
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:fitsSystemWindows="true"
                 app:layout_collapseMode="pin" />
 
             <ImageButton
@@ -42,14 +39,28 @@
                 android:clickable="true"
                 android:contentDescription="@string/setting"
                 android:focusable="true"
+                android:transitionName="@string/transition_setting"
                 app:layout_collapseMode="pin" />
-        </com.google.android.material.appbar.CollapsingToolbarLayout>
+
+            <TextView
+                android:id="@+id/txt_vichat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="@string/app_name"
+                android:textColor="@android:color/black"
+                android:textSize="30sp"
+                android:transitionName="@string/transition_intro"
+                app:layout_collapseMode="pin" />
+
+        </com.uswit.videocalltranslate.CustomCollapsingLayout>
 
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginBottom="30dp"
         android:fillViewport="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
@@ -60,14 +71,15 @@
             android:orientation="vertical"
             android:paddingStart="10dp"
             android:paddingEnd="10dp"
+            android:paddingBottom="10dp"
             tools:context="com.uswit.videocalltranslate.MainActivity">
 
             <LinearLayout
                 android:id="@+id/linearLayout_focus"
-                android:focusable="true"
-                android:focusableInTouchMode="true"
                 android:layout_width="0px"
                 android:layout_height="0px"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:orientation="horizontal" />
 
             <androidx.appcompat.widget.LinearLayoutCompat
@@ -125,7 +137,8 @@
                 <ListView
                     android:id="@+id/faivorit_record_list"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="true" />
 
             </LinearLayout>
         </RelativeLayout>

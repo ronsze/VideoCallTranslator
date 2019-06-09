@@ -23,18 +23,15 @@ public class FRAdapter extends BaseAdapter {
 
     TextView title;
 
-    private int itemCnt;
     int favoriteCnt;
 
-    FRAdapter(Context _context, int _cnt, TextView title){
+    FRAdapter(Context _context, TextView title){
         this.context = _context;
-        this.itemCnt = _cnt;
         this.title = title;
     }
 
-    FRAdapter(Context _context, int _cnt, TextView title, ArrayList<JsonUser> _userArray){
+    FRAdapter(Context _context, TextView title, ArrayList<JsonUser> _userArray){
         this.context = _context;
-        this.itemCnt = _cnt;
         this.title = title;
         this.userArray.addAll(_userArray);
 
@@ -81,11 +78,7 @@ public class FRAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        if(items.size() < itemCnt){
-            return items.size();
-        }else{
-            return itemCnt;
-        }
+        return items.size();
     }
 
     @Override

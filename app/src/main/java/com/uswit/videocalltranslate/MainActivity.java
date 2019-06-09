@@ -33,7 +33,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.ActivityOptionsCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -46,6 +48,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
@@ -62,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     String lang;
 
     private MenuItem refreshItem;
+    private EditText roomEditText;
 
     //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
     // 영상통화
@@ -118,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         assert actionBar != null;
         actionBar.setDisplayShowCustomEnabled(true);
-        actionBar.setDisplayShowTitleEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
         actionBar.setDisplayHomeAsUpEnabled(false);
 
         AppBarLayout appBarLayout = findViewById(R.id.app_bar);
@@ -174,9 +178,11 @@ public class MainActivity extends AppCompatActivity {
 
         prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
 
+        roomEditText = findViewById(R.id.contact_name_call);
+        roomEditText.clearFocus();
+
         ImageButton connectButton = findViewById(R.id.connect_button);
         connectButton.setOnClickListener(view -> {
-            EditText roomEditText = findViewById(R.id.contact_name_call);
             if(roomEditText.getText().length() > 0 && roomEditText.getText() != null) {
                 connectToRoom(roomEditText.getText().toString(), false, false, false, 0);
                 roomEditText.setText("");
@@ -195,7 +201,6 @@ public class MainActivity extends AppCompatActivity {
         }*/
 
         lang = prefs.getString("lang", "ko");
-        callRecordCnt = 10;
 
         title = findViewById(R.id.open_close);
 
@@ -209,10 +214,10 @@ public class MainActivity extends AppCompatActivity {
         users.addAll(loadJson());
 
         if(users.isEmpty() || users == null){
-            frAdapter = new FRAdapter(this, callRecordCnt, title);
+            frAdapter = new FRAdapter(this, title);
         }else{
             title.setText(R.string.call_record);
-            frAdapter = new FRAdapter(this, callRecordCnt, title, users);
+            frAdapter = new FRAdapter(this, title, users);
             int favoriteCnt = sharedPref.getInt("favoriteCnt", 0);
             frAdapter.setFavoriteCnt(favoriteCnt);
         }
@@ -241,8 +246,9 @@ public class MainActivity extends AppCompatActivity {
 
         ImageButton settingBtn = findViewById(R.id.setting);
         settingBtn.setOnClickListener(view -> {
-            Intent setIntent = new Intent(MainActivity.this, SettingActivity.class);
-            startActivity(setIntent);
+            Intent setIntent = new Intent(MainActivity.this, IntroSetting.class);
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(MainActivity.this, settingBtn, Objects.requireNonNull(ViewCompat.getTransitionName(settingBtn)));
+            startActivity(setIntent, options.toBundle());
         });
     }
 
@@ -271,9 +277,13 @@ public class MainActivity extends AppCompatActivity {
 
         if(frAdapter.isEmpty()) {
             title.setText(R.string.empty_call_record);
+        } else {
+            title.setText(R.string.call_record);
         }
 
+        selectRecentFragment.collapsTitle(isBottomCollapsed);
         selectRecentFragment.refresh();
+        roomEditText.clearFocus();
     }
 
     @Override
@@ -725,7 +735,7 @@ public class MainActivity extends AppCompatActivity {
                 endTime = System.currentTimeMillis();
                 Toast.makeText(this, R.string.end_app, Toast.LENGTH_SHORT).show();
             } else if (System.currentTimeMillis() - endTime < 2000) {
-                super.onBackPressed();
+                finish();
             }
         } else {
             if(selectRecentFragment.isSub) {

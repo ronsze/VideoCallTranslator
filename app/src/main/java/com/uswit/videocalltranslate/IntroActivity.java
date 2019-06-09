@@ -1,144 +1,177 @@
 package com.uswit.videocalltranslate;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
-import android.widget.Button;
+import android.os.Handler;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.TranslateAnimation;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.ToggleButton;
-
-import java.util.Locale;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityOptionsCompat;
+import androidx.core.view.ViewCompat;
+
+import java.util.Objects;
 
 public class IntroActivity extends AppCompatActivity {
-    private String strLanguage;
-    private Intent set_Intent;
-    private boolean isSet;
 
-    private boolean isChanged = false;
+    AlphaAnimation anim;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.intro);
+    public void onCreate(Bundle saveInstanceState) {
+        super.onCreate(saveInstanceState);
+        setContentView(R.layout.activity_intro);
 
-        isSet = false;
+        RelativeLayout view = findViewById(R.id.intro_layout);
+        view.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        // Layout has happened here.
 
-        set_Intent = getIntent();
+                        TextView txtVideo = findViewById(R.id.txt_video);
+                        TextView txtAmp = findViewById(R.id.txt_amp);
+                        TextView txtRealtime = findViewById(R.id.txt_realtime);
+                        TextView txtTranslation = findViewById(R.id.txt_translation);
+                        TextView txtChatting = findViewById(R.id.txt_chatting);
+                        TextView txtVi = findViewById(R.id.txt_vi);
+                        TextView txtVi2 = findViewById(R.id.txt_vi2);
+                        TextView txtChat = findViewById(R.id.txt_chat);
+                        TextView txtChat2 = findViewById(R.id.txt_chat2);
+                        TextView txtViChat = findViewById(R.id.txt_vichat);
 
-        if(set_Intent != null){
-            isSet = set_Intent.getBooleanExtra("isSet", false);
-        }
+                        AnimationSet set = new AnimationSet(true);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        set.addAnimation(anim);
 
-        Locale systemLocale = getResources().getConfiguration().locale;
-        strLanguage = systemLocale.getLanguage();
+                        anim = new AlphaAnimation(1f, 0f);
+                        anim.setDuration(300);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-        SharedPreferences prefs = getSharedPreferences("PrefSets", MODE_PRIVATE);
-        boolean setbool = prefs.getBoolean("setbool", false);
-        setbool = !isSet;
+                        txtVideo.startAnimation(set);
 
-        if (setbool) {
-            String setLang = prefs.getString("lang", strLanguage);
+                        set = new AnimationSet(true);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        anim.setStartOffset(400);
+                        set.addAnimation(anim);
 
-            changeConfigulation(setLang);
+                        anim = new AlphaAnimation(1f, 0f);
+                        anim.setDuration(300);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-            Intent intent = new Intent(IntroActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
-        }
+                        txtAmp.startAnimation(set);
 
+                        set = new AnimationSet(true);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        anim.setStartOffset(600);
+                        set.addAnimation(anim);
 
-        final ToggleButton toggleButton_ko = findViewById(R.id.input_name);
-        final ToggleButton toggleButton_en = findViewById(R.id.btn_english);
+                        anim = new AlphaAnimation(1f, 0f);
+                        anim.setDuration(300);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-        if (strLanguage.equals("ko")) {
-            toggleButton_ko.setChecked(true);
-            toggleButton_ko.setEnabled(false);
-        }
-        else {
-            toggleButton_en.setChecked(true);
-            toggleButton_en.setEnabled(false);
-        }
+                        txtRealtime.startAnimation(set);
 
-        toggleButton_ko.setOnClickListener(v -> {
-            if (toggleButton_en.isChecked()) {
-                toggleButton_en.setChecked(false);
-                toggleButton_en.setEnabled(true);
-                toggleButton_ko.setEnabled(false);
-            }
+                        set = new AnimationSet(true);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        anim.setStartOffset(800);
+                        set.addAnimation(anim);
 
-            changeConfigulation("ko");
+                        anim = new AlphaAnimation(1f, 0f);
+                        anim.setDuration(300);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-            TextView textView = findViewById(R.id.textView);
-            textView.setText(R.string.select_lang);
+                        txtTranslation.startAnimation(set);
 
-            isChanged = !isChanged;
+                        set = new AnimationSet(true);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        anim.setStartOffset(1000);
+                        set.addAnimation(anim);
 
-            Button button = findViewById(R.id.btn_next);
-            if(isChanged)
-                button.setText(R.string.btn_change);
-            else
-                button.setText(R.string.cancel);
-        });
+                        anim = new AlphaAnimation(1f, 0f);
+                        anim.setDuration(300);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-        toggleButton_en.setOnClickListener(v -> {
-            if (toggleButton_ko.isChecked()) {
-                toggleButton_ko.setChecked(false);
-                toggleButton_ko.setEnabled(true);
-                toggleButton_en.setEnabled(false);
-            }
+                        txtChatting.startAnimation(set);
 
-            changeConfigulation("en");
+                        set = new AnimationSet(true);
 
-            TextView textView = findViewById(R.id.textView);
-            textView.setText(R.string.select_lang);
+                        anim = new AlphaAnimation(0f, 1f);
+                        anim.setDuration(200);
+                        anim.setStartOffset(1200);
+                        set.addAnimation(anim);
 
-            isChanged = !isChanged;
+                        TranslateAnimation animation = new TranslateAnimation(0, txtVi2.getX()-txtVi.getX(),0 , txtVi2.getY()-txtVi.getY());
+                        animation.setDuration(600);
+                        animation.setStartOffset(1400);
+                        animation.setAnimationListener(new Animation.AnimationListener() {
+                            @Override
+                            public void onAnimationStart(Animation animation) {
 
-            Button button = findViewById(R.id.btn_next);
-            if(isChanged)
-                button.setText(R.string.btn_change);
-            else
-                button.setText(R.string.cancel);
-        });
+                            }
 
-        findViewById(R.id.btn_next).setOnClickListener(v -> {
-            SharedPreferences prefs1 = getSharedPreferences("PrefSets", MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs1.edit();
-            editor.putString("lang", strLanguage);
-            editor.putBoolean("setbool", true);
-            editor.apply();
+                            @Override
+                            public void onAnimationEnd(Animation animation) {
+                                txtViChat.setVisibility(View.VISIBLE);
+                            }
 
-            finishAndStart();
-        });
+                            @Override
+                            public void onAnimationRepeat(Animation animation) {
+
+                            }
+                        });
+
+                        set.addAnimation(animation);
+
+                        txtVi.startAnimation(set);
+
+                        animation = new TranslateAnimation(0, txtChat2.getX()-txtChat.getX(),0 , txtChat2.getY()-txtChat.getY());
+                        animation.setDuration(600);
+                        animation.setStartOffset(1400);
+
+                        set = new AnimationSet(true);
+                        set.addAnimation(anim);
+                        set.addAnimation(animation);
+
+                        txtChat.startAnimation(set);
+
+                        new Handler().postDelayed(() -> {
+                            Intent intent = new Intent(IntroActivity.this, MainActivity.class);
+                            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(IntroActivity.this, txtViChat, Objects.requireNonNull(ViewCompat.getTransitionName(txtViChat)));
+                            startActivity(intent, options.toBundle());
+                            overridePendingTransition(R.anim.fade, R.anim.hold);
+                        }, 2000);
+
+                        // Don't forget to remove your listener when you are done with it.
+                        view.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    }
+                });
     }
 
-    public void changeConfigulation(String code) {
-        Locale mLocale = new Locale(code);
-        Configuration config = new Configuration();
-        config.locale = mLocale;
-        getResources().updateConfiguration(config, null);
+    @Override
+    public void onStop() {
+        super.onStop();
 
-        strLanguage = code;
+        supportFinishAfterTransition();
     }
 
-    void finishAndStart() {
-        if (isChanged) {
-            //Intent intent = new Intent(IntroActivity.this, InputNameActivity.class);
-            Intent intent = new Intent(IntroActivity.this, MainActivity.class);
-            startActivity(intent);
-            MainActivity.activity.finish();
-            SettingActivity.activity.finish();
-            finish();
-            overridePendingTransition(R.anim.not_move_activity,R.anim.rightout_activity);
-        } else {
-            finish();
-        }
-    }
-
-    public void onBackPressed(){
+    @Override
+    public void onBackPressed() {
         // Nope Back
     }
 }

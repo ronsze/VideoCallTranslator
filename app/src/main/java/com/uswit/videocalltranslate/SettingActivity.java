@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -43,9 +44,9 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
             //모든 통화기록 삭제
             deleteDialog();
         }else if(preference.getKey().equals("select_language")){
-            Intent lang_Intent = new Intent(SettingActivity.this, IntroActivity.class);
+            Intent lang_Intent = new Intent(SettingActivity.this, LanguageActivity.class);
             lang_Intent.putExtra("isSet", true);
-            startActivity(lang_Intent);
+            startActivityForResult(lang_Intent, 1);
         }
         return false;
     }
@@ -70,7 +71,22 @@ public class SettingActivity extends PreferenceActivity implements Preference.On
         builder.show();
     }
 
-    public void onBackPressed(){
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(data.getStringExtra("result").equals("change")) {
+            Intent intent = new Intent();
+            intent.putExtra("result", "changed_finish");
+            setResult(RESULT_OK, intent);
+            finish();
+        }
+    }
+
+    public void onBackPressed() {
+        Intent intent = new Intent();
+        intent.putExtra("result", "finish");
+        setResult(RESULT_OK, intent);
         finish();
     }
 }

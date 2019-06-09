@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/intro_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/txt_video"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_above="@id/txt_amp"
+        android:layout_centerHorizontal="true"
+        android:text="Videocall"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_vi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/txt_video"
+        android:layout_alignTop="@id/txt_video"
+        android:layout_alignWithParentIfMissing="true"
+        android:text="Vi"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_amp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/txt_realtime"
+        android:layout_centerHorizontal="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:text="&amp;"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_realtime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:text="Real-Time"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_translation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/txt_realtime"
+        android:layout_centerHorizontal="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:text="Translation"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_chatting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/txt_translation"
+        android:layout_centerHorizontal="true"
+        android:layout_alignWithParentIfMissing="true"
+        android:text="Chatting"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_chat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/txt_chatting"
+        android:layout_alignTop="@id/txt_chatting"
+        android:layout_alignWithParentIfMissing="true"
+        android:text="Chat"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+
+    <TextView
+        android:id="@+id/txt_vichat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="ViChat"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp"
+        android:transitionName="@string/transition_intro"
+        android:visibility="invisible" />
+
+
+    <TextView
+        android:id="@+id/txt_vi2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_alignStart="@id/txt_vichat"
+        android:layout_alignTop="@id/txt_vichat"
+        android:text="Vi"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_chat2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignWithParentIfMissing="true"
+        android:layout_alignTop="@id/txt_vichat"
+        android:layout_alignEnd="@id/txt_vichat"
+        android:text="Chat"
+        android:textColor="@color/colorPrimary"
+        android:textSize="30sp"
+        android:visibility="invisible" />
+</RelativeLayout>
