@@ -21,7 +21,8 @@
         </activity>
 
         <activity android:name=".InputNameActivity" />
-        <activity android:name=".MainActivity"/>
+        <activity android:name=".MainActivity"
+            android:windowSoftInputMode="stateHidden|adjustPan" />
         <activity android:name=".apprtc.CallActivity"/>
         <activity android:name=".ChatActivity"
             android:theme="@style/AppTheme.Transparent"/>

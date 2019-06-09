@@ -238,6 +238,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     CustomAdapter adapter;
 
     private Context context;
+    private RecyclerView recordList;
 
     private final VoiceRecorder.Callback mVoiceCallback = new VoiceRecorder.Callback() {
 
@@ -1172,6 +1173,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                             String transText = adapter.add(new AdapterContent(text, R.id.chat_local, lang));
                             adapter.notifyDataSetChanged();
                             recordText.append(send).append("|").append(transText).append("<local>");
+                            downScroll();
                         });
                     }
                     if (sendText != null && !TextUtils.isEmpty(text)) {
@@ -1199,6 +1201,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
                     receiveText.setText(transText);
 
                     recordText.append(receiveStr).append("|").append(receiveLang).append("|").append(transText).append("<remote>");
+                    downScroll();
                 }
             }
         }
@@ -1208,7 +1211,7 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
     // 채팅 내역
 
     void setListView() {
-        RecyclerView recordList = findViewById(R.id.recordList_Call);
+        recordList = findViewById(R.id.recordList_Call);
 
         recordList.setHasFixedSize(true);
 
@@ -1216,5 +1219,14 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
         recordList.setLayoutManager(viewLayoutManager);
 
         recordList.setAdapter(adapter);
+    }
+
+    public void downScroll(){
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                recordList.scrollToPosition(adapter.getItemCount()-1);
+            }
+        }, 200);
     }
 }
