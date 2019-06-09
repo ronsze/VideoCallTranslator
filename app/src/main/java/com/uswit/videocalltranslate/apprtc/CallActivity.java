@@ -1229,4 +1229,8 @@ public class CallActivity extends Activity implements AppRTCClient.SignalingEven
             }
         }, 200);
     }
+
+    public void onBackPressed(){
+        disconnect();
+    }
 }
